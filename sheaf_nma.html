@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SheafNMA: Sheaf-Theoretic NMA Consistency Analysis</title>
+<style>
+/* ===== CSS Custom Properties ===== */
+:root {
+  --bg: #f8f9fa;
+  --fg: #1a1a2e;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --card-bg: #fff;
+  --border: #d1d5db;
+  --muted: #6b7280;
+  --red: #dc2626;
+  --green: #16a34a;
+  --blue: #2563eb;
+  --orange: #ea580c;
+  --purple: #7c3aed;
+  --input-bg: #fff;
+  --input-border: #d1d5db;
+  --code-bg: #f3f4f6;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --radius: 6px;
+}
+
+body.dark {
+  --bg: #0f172a;
+  --fg: #e2e8f0;
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
+  --card-bg: #1e293b;
+  --border: #334155;
+  --muted: #94a3b8;
+  --red: #f87171;
+  --green: #4ade80;
+  --blue: #60a5fa;
+  --orange: #fb923c;
+  --purple: #a78bfa;
+  --input-bg: #1e293b;
+  --input-border: #475569;
+  --code-bg: #1e293b;
+  --shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ===== Header ===== */
+.app-header {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.app-header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.app-header h1 span {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.85rem;
+  margin-left: 8px;
+}
+.dark-toggle {
+  background: var(--card-bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+.dark-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===== Tab System ===== */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  background: var(--card-bg);
+  border-bottom: 2px solid var(--border);
+  padding: 0 24px;
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--fg); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ===== Main Content ===== */
+.main-content { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ===== Cards ===== */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.card h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--fg);
+}
+.card h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--fg);
+}
+
+/* ===== Buttons ===== */
+.btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===== Forms ===== */
+select, textarea, input[type="text"], input[type="number"] {
+  background: var(--input-bg);
+  color: var(--fg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+select:focus, textarea:focus, input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* ===== Tables ===== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.data-table th, .data-table td {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+.data-table th {
+  background: var(--code-bg);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.data-table tr:nth-child(even) { background: var(--code-bg); }
+.data-table td.num { text-align: right; font-family: 'Consolas', monospace; }
+
+/* ===== Canvas Containers ===== */
+.canvas-container {
+  position: relative;
+  width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.canvas-container canvas {
+  display: block;
+  width: 100%;
+}
+
+/* ===== Network Visualization ===== */
+#networkCanvas { width: 100%; height: 400px; }
+#spectrumCanvas { width: 100%; height: 300px; }
+
+/* ===== Utility ===== */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.text-muted { color: var(--muted); font-size: 0.8rem; }
+.text-sm { font-size: 0.8rem; }
+.text-mono { font-family: 'Consolas', 'Monaco', monospace; }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.text-orange { color: var(--orange); }
+.text-blue { color: var(--blue); }
+.text-purple { color: var(--purple); }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.badge-green { background: #dcfce7; color: #166534; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-orange { background: #fff7ed; color: #9a3412; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+body.dark .badge-green { background: #14532d; color: #bbf7d0; }
+body.dark .badge-red { background: #7f1d1d; color: #fecaca; }
+body.dark .badge-orange { background: #7c2d12; color: #fed7aa; }
+body.dark .badge-blue { background: #1e3a5f; color: #bfdbfe; }
+
+/* ===== Score Bar ===== */
+.score-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.score-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--code-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+/* ===== Footer ===== */
+.app-footer {
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 32px;
+}
+
+/* ===== Test Panel ===== */
+.test-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border-top: 2px solid var(--border);
+  max-height: 50vh;
+  overflow-y: auto;
+  z-index: 200;
+  display: none;
+  padding: 16px 24px;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
+}
+.test-panel.visible { display: block; }
+.test-result {
+  font-family: 'Consolas', monospace;
+  font-size: 0.8rem;
+  padding: 3px 0;
+}
+.test-pass { color: var(--green); }
+.test-fail { color: var(--red); }
+.test-summary {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .app-header { padding: 10px 16px; }
+  .main-content { padding: 16px; }
+  .tab-btn { padding: 8px 14px; font-size: 0.8rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="app-header">
+  <h1>SheafNMA <span>Sheaf-Theoretic NMA Consistency Analysis</span></h1>
+  <button class="dark-toggle" onclick="toggleDark()" aria-label="Toggle dark mode">Dark Mode</button>
+</header>
+
+<!-- ===== Tab Bar ===== -->
+<nav class="tab-bar" role="tablist">
+  <button class="tab-btn active" role="tab" aria-selected="true" data-tab="data">Data</button>
+  <button class="tab-btn" role="tab" aria-selected="false" data-tab="network">Network</button>
+  <button class="tab-btn" role="tab" aria-selected="false" data-tab="spectrum">Spectrum</button>
+  <button class="tab-btn" role="tab" aria-selected="false" data-tab="export">Export</button>
+</nav>
+
+<!-- ===== Main Content ===== -->
+<main class="main-content">
+
+  <!-- Data Tab -->
+  <div id="tab-data" class="tab-panel active" role="tabpanel">
+    <div class="grid-2">
+      <div class="card">
+        <h2>Dataset Selection</h2>
+        <label for="datasetSelect">Choose dataset</label>
+        <select id="datasetSelect" onchange="onDatasetChange()">
+          <option value="smoking">Smoking Cessation (Hasselblad 1998) - 24 studies, 4 treatments</option>
+          <option value="simulated">Simulated (5 treatments, 2 inconsistent) - seed=42</option>
+          <option value="custom">Custom CSV</option>
+        </select>
+        <div class="mt-12">
+          <label for="dataTextarea">Contrast data (CSV: study, treat1, treat2, effect, se)</label>
+          <textarea id="dataTextarea" rows="14" readonly></textarea>
+        </div>
+        <div class="mt-12 flex-row">
+          <button class="btn btn-primary" onclick="runAnalysis()">Analyze Consistency</button>
+          <span id="analysisStatus" class="text-muted"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Network Summary</h2>
+        <div id="networkSummary" class="text-muted">Select a dataset and click "Analyze Consistency" to begin.</div>
+        <div id="edgeTable" class="mt-12"></div>
+      </div>
+    </div>
+
+    <!-- Node estimates table -->
+    <div class="card" id="nodeEstimatesCard" style="display:none;">
+      <h2>Node Estimates (Reference: first treatment = 0)</h2>
+      <div id="nodeEstimatesTable"></div>
+    </div>
+
+    <!-- Edge scores table -->
+    <div class="card" id="edgeScoresCard" style="display:none;">
+      <h2>Edge Inconsistency Scores</h2>
+      <p class="text-muted mb-8">Residual-squared scores from sheaf analysis. Higher = more inconsistent.</p>
+      <div id="edgeScoresTable"></div>
+    </div>
+  </div>
+
+  <!-- Network Tab -->
+  <div id="tab-network" class="tab-panel" role="tabpanel">
+    <div class="card">
+      <h2>Network Graph</h2>
+      <p class="text-muted mb-8">Nodes = treatments. Edge width = number of studies. Edge color = inconsistency score (green = consistent, red = inconsistent).</p>
+      <div class="canvas-container">
+        <canvas id="networkCanvas" width="900" height="400"></canvas>
+      </div>
+    </div>
+    <div class="card" id="laplacianCard" style="display:none;">
+      <h2>Sheaf Laplacian Matrix</h2>
+      <div id="laplacianTable"></div>
+    </div>
+  </div>
+
+  <!-- Spectrum Tab -->
+  <div id="tab-spectrum" class="tab-panel" role="tabpanel">
+    <div class="grid-2">
+      <div class="card">
+        <h2>Eigenvalue Spectrum</h2>
+        <p class="text-muted mb-8">Eigenvalues of the sheaf Laplacian. Non-zero eigenvalues reflect network connectivity. The Global Inconsistency Index (GII) summarizes spectral information.</p>
+        <div class="canvas-container">
+          <canvas id="spectrumCanvas" width="600" height="300"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Spectral Summary</h2>
+        <div id="spectralSummary" class="text-muted">Run analysis to see spectral results.</div>
+        <div id="eigenTable" class="mt-12"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Tab -->
+  <div id="tab-export" class="tab-panel" role="tabpanel">
+    <div class="card">
+      <h2>Export Results</h2>
+      <p class="text-muted mb-8">Download analysis results in various formats.</p>
+      <div class="flex-row">
+        <button class="btn btn-primary" onclick="exportCSV()">Export CSV</button>
+        <button class="btn btn-outline" onclick="exportJSON()">Export JSON</button>
+        <button class="btn btn-outline" onclick="exportLaTeX()">Export LaTeX</button>
+      </div>
+      <div class="mt-16" id="exportPreview"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="app-footer">
+  <span>SheafNMA v1.0 | Mahmood Ahmad | Royal Free Hospital</span>
+  <button class="btn btn-sm btn-outline" onclick="runTests()">Run Tests</button>
+</footer>
+
+<!-- ===== Test Panel ===== -->
+<div id="testPanel" class="test-panel">
+  <div class="flex-row" style="justify-content:space-between;">
+    <h3>Test Results</h3>
+    <button class="btn btn-sm btn-outline" onclick="closeTests()">Close</button>
+  </div>
+  <div id="testResults" class="mt-8"></div>
+</div>
+
+<script>
+/* =========================================================================
+   SheafNMA v1.0 — Sheaf-Theoretic NMA Consistency Analysis
+   ========================================================================= */
+
+// ===== UTILITY FUNCTIONS =====
+
+/** HTML-escape for safe DOM insertion (including quotes for attr contexts) */
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Normal CDF via rational approximation (Zelen & Severo, 1964).
+ *  Abramowitz-Stegun 26.2.16: |error| < 1.5e-7.
+ *  Uses pdf(x) * polynomial in t where t = 1/(1 + 0.2316419*x). */
+function normalCDF(x) {
+  if (x === 0) return 0.5;
+  const b1 = 0.319381530, b2 = -0.356563782, b3 = 1.781477937;
+  const b4 = -1.821255978, b5 = 1.330274429;
+  const pp = 0.2316419;
+  const ax = Math.abs(x);
+  const t = 1.0 / (1.0 + pp * ax);
+  const pdf = Math.exp(-0.5 * ax * ax) / Math.sqrt(2.0 * Math.PI);
+  const poly = t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))));
+  const tail = pdf * poly;
+  return x >= 0 ? 1.0 - tail : tail;
+}
+
+/** Normal quantile (Beasley-Springer-Moro algorithm) */
+function normalQuantile(p) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  if (p === 0.5) return 0;
+  const a = [-3.969683028665376e+01, 2.209460984245205e+02,
+             -2.759285104469687e+02, 1.383577518672690e+02,
+             -3.066479806614716e+01, 2.506628277459239e+00];
+  const b = [-5.447609879822406e+01, 1.615858368580409e+02,
+             -1.556989798598866e+02, 6.680131188771972e+01,
+             -1.328068155288572e+01];
+  const c = [-7.784894002430293e-03, -3.223964580411365e-01,
+             -2.400758277161838e+00, -2.549732539343734e+00,
+              4.374664141464968e+00, 2.938163982698783e+00];
+  const d = [7.784695709041462e-03, 3.224671290700398e-01,
+             2.445134137142996e+00, 3.754408661907416e+00];
+  const pLow = 0.02425, pHigh = 1 - pLow;
+  let q, r;
+  if (p < pLow) {
+    q = Math.sqrt(-2 * Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+           ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if (p <= pHigh) {
+    q = p - 0.5;
+    r = q * q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5]) * q /
+           (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else {
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+            ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+}
+
+
+// ===== SEEDED PRNG: xoshiro128** =====
+
+function xoshiro128ss(seed) {
+  // Seed expansion via splitmix32
+  function splitmix32(a) {
+    return function() {
+      a |= 0; a = a + 0x9e3779b9 | 0;
+      let t = a ^ (a >>> 16); t = Math.imul(t, 0x21f0aaad);
+      t = t ^ (t >>> 15); t = Math.imul(t, 0x735a2d97);
+      return (t ^ (t >>> 15)) >>> 0;
+    };
+  }
+  const sm = splitmix32(seed);
+  let s = [sm(), sm(), sm(), sm()];
+
+  return function() {
+    const result = (Math.imul(s[1] * 5, 1 << 7 | 1) >>> 0);
+    const t = s[1] << 9;
+    s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]; s[0] ^= s[3];
+    s[2] ^= t;
+    s[3] = (s[3] << 11 | s[3] >>> 21);
+    return result / 4294967296;
+  };
+}
+
+/** Box-Muller transform for normal deviates from a seeded PRNG */
+function normalRandom(rng) {
+  const u1 = rng();
+  const u2 = rng();
+  return Math.sqrt(-2 * Math.log(u1 + 1e-15)) * Math.cos(2 * Math.PI * u2);
+}
+
+
+// ===== LINEAR ALGEBRA MODULE =====
+
+/** Matrix multiplication: C = A * B */
+function matMul(A, B) {
+  const m = A.length, n = B[0].length, p = B.length;
+  const C = Array.from({length: m}, () => new Float64Array(n));
+  for (let i = 0; i < m; i++) {
+    for (let k = 0; k < p; k++) {
+      const aik = A[i][k];
+      if (aik === 0) continue;
+      for (let j = 0; j < n; j++) {
+        C[i][j] += aik * B[k][j];
+      }
+    }
+  }
+  return C;
+}
+
+/** Transpose */
+function matTranspose(A) {
+  const m = A.length, n = A[0].length;
+  const T = Array.from({length: n}, () => new Float64Array(m));
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      T[j][i] = A[i][j];
+    }
+  }
+  return T;
+}
+
+/** Gauss-Jordan inverse with partial pivoting. Returns null if singular. */
+function matInverse(A) {
+  const n = A.length;
+  // Augmented matrix [A | I]
+  const aug = Array.from({length: n}, (_, i) => {
+    const row = new Float64Array(2 * n);
+    for (let j = 0; j < n; j++) row[j] = A[i][j];
+    row[n + i] = 1;
+    return row;
+  });
+
+  for (let col = 0; col < n; col++) {
+    // Partial pivoting: find max abs in column
+    let maxVal = Math.abs(aug[col][col]);
+    let maxRow = col;
+    for (let r = col + 1; r < n; r++) {
+      const v = Math.abs(aug[r][col]);
+      if (v > maxVal) { maxVal = v; maxRow = r; }
+    }
+    if (maxVal < 1e-14) return null; // Singular
+
+    // Swap rows
+    if (maxRow !== col) {
+      const tmp = aug[col]; aug[col] = aug[maxRow]; aug[maxRow] = tmp;
+    }
+
+    // Scale pivot row
+    const pivot = aug[col][col];
+    for (let j = 0; j < 2 * n; j++) aug[col][j] /= pivot;
+
+    // Eliminate column
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const factor = aug[r][col];
+      if (factor === 0) continue;
+      for (let j = 0; j < 2 * n; j++) {
+        aug[r][j] -= factor * aug[col][j];
+      }
+    }
+  }
+
+  // Extract inverse
+  const inv = Array.from({length: n}, (_, i) => {
+    const row = new Float64Array(n);
+    for (let j = 0; j < n; j++) row[j] = aug[i][n + j];
+    return row;
+  });
+  return inv;
+}
+
+/** Solve Ax = b via inverse */
+function matSolve(A, b) {
+  const inv = matInverse(A);
+  if (!inv) return null;
+  const n = b.length;
+  const x = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      x[i] += inv[i][j] * b[j];
+    }
+  }
+  return x;
+}
+
+/** Dot product of two vectors */
+function dot(a, b) {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return s;
+}
+
+/** Eigendecomposition for symmetric matrices via Jacobi rotation.
+ *  Returns {values: [...], vectors: [[col0], [col1], ...]} sorted ascending.
+ *  Vectors are columns of the rotation matrix. */
+function eigenSymmetric(A) {
+  const n = A.length;
+  // Work on a copy
+  const S = Array.from({length: n}, (_, i) => {
+    const row = new Float64Array(n);
+    for (let j = 0; j < n; j++) row[j] = A[i][j];
+    return row;
+  });
+  // Eigenvector accumulator (starts as identity)
+  const V = Array.from({length: n}, (_, i) => {
+    const row = new Float64Array(n);
+    row[i] = 1;
+    return row;
+  });
+
+  const maxIter = 100 * n * n;
+  for (let iter = 0; iter < maxIter; iter++) {
+    // Find largest off-diagonal element
+    let maxOff = 0, p = 0, q = 1;
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const v = Math.abs(S[i][j]);
+        if (v > maxOff) { maxOff = v; p = i; q = j; }
+      }
+    }
+    if (maxOff < 1e-12) break; // Converged
+
+    // Compute Jacobi rotation
+    const Spq = S[p][q];
+    const diff = S[q][q] - S[p][p];
+    let t;
+    if (Math.abs(Spq) < 1e-15 * Math.abs(diff)) {
+      t = Spq / diff;
+    } else {
+      const phi = diff / (2 * Spq);
+      t = 1 / (Math.abs(phi) + Math.sqrt(phi * phi + 1));
+      if (phi < 0) t = -t;
+    }
+    const c = 1 / Math.sqrt(t * t + 1);
+    const s = t * c;
+    const tau = s / (1 + c);
+
+    // Update S matrix
+    const Spp = S[p][p], Sqq = S[q][q];
+    S[p][p] = Spp - t * Spq;
+    S[q][q] = Sqq + t * Spq;
+    S[p][q] = 0; S[q][p] = 0;
+
+    for (let r = 0; r < n; r++) {
+      if (r === p || r === q) continue;
+      const Srp = S[r][p], Srq = S[r][q];
+      S[r][p] = S[p][r] = Srp - s * (Srq + tau * Srp);
+      S[r][q] = S[q][r] = Srq + s * (Srp - tau * Srq);
+    }
+
+    // Accumulate eigenvectors
+    for (let r = 0; r < n; r++) {
+      const Vrp = V[r][p], Vrq = V[r][q];
+      V[r][p] = Vrp - s * (Vrq + tau * Vrp);
+      V[r][q] = Vrq + s * (Vrp - tau * Vrq);
+    }
+  }
+
+  // Extract eigenvalues and sort ascending
+  const eigenvalues = new Float64Array(n);
+  for (let i = 0; i < n; i++) eigenvalues[i] = S[i][i];
+
+  // Build index array for sorting
+  const indices = Array.from({length: n}, (_, i) => i);
+  indices.sort((a, b) => eigenvalues[a] - eigenvalues[b]);
+
+  const sortedValues = indices.map(i => eigenvalues[i]);
+  // Eigenvectors as columns — extract column i from V
+  const sortedVectors = indices.map(idx => {
+    const col = new Float64Array(n);
+    for (let r = 0; r < n; r++) col[r] = V[r][idx];
+    return col;
+  });
+
+  return { values: sortedValues, vectors: sortedVectors };
+}
+
+
+// ===== DATASETS =====
+
+/** Smoking cessation dataset — Hasselblad 1998 (log OR scale).
+ *  Treatments: A = No contact, B = Self-help, C = Individual counselling, D = Group counselling.
+ *  24 studies comparing pairs of treatments. */
+function getSmokingData() {
+  return [
+    // A vs B (no contact vs self-help) — 9 studies
+    { study: "Study 01", treat1: "A", treat2: "B", effect: -0.50, se: 0.35 },
+    { study: "Study 02", treat1: "A", treat2: "B", effect: -0.31, se: 0.41 },
+    { study: "Study 03", treat1: "A", treat2: "B", effect: -0.18, se: 0.30 },
+    { study: "Study 04", treat1: "A", treat2: "B", effect: -0.45, se: 0.25 },
+    { study: "Study 05", treat1: "A", treat2: "B", effect: -0.62, se: 0.38 },
+    { study: "Study 06", treat1: "A", treat2: "B", effect: -0.28, se: 0.50 },
+    { study: "Study 07", treat1: "A", treat2: "B", effect: -0.37, se: 0.33 },
+    { study: "Study 08", treat1: "A", treat2: "B", effect: -0.43, se: 0.28 },
+    { study: "Study 09", treat1: "A", treat2: "B", effect: -0.21, se: 0.44 },
+    // A vs C (no contact vs individual counselling) — 5 studies
+    { study: "Study 10", treat1: "A", treat2: "C", effect: -0.82, se: 0.28 },
+    { study: "Study 11", treat1: "A", treat2: "C", effect: -1.01, se: 0.32 },
+    { study: "Study 12", treat1: "A", treat2: "C", effect: -0.73, se: 0.26 },
+    { study: "Study 13", treat1: "A", treat2: "C", effect: -0.89, se: 0.35 },
+    { study: "Study 14", treat1: "A", treat2: "C", effect: -0.95, se: 0.30 },
+    // A vs D (no contact vs group counselling) — 4 studies
+    { study: "Study 15", treat1: "A", treat2: "D", effect: -1.10, se: 0.32 },
+    { study: "Study 16", treat1: "A", treat2: "D", effect: -0.98, se: 0.25 },
+    { study: "Study 17", treat1: "A", treat2: "D", effect: -1.25, se: 0.40 },
+    { study: "Study 18", treat1: "A", treat2: "D", effect: -1.05, se: 0.30 },
+    // B vs C (self-help vs individual counselling) — 3 studies
+    { study: "Study 19", treat1: "B", treat2: "C", effect: -0.48, se: 0.30 },
+    { study: "Study 20", treat1: "B", treat2: "C", effect: -0.55, se: 0.35 },
+    { study: "Study 21", treat1: "B", treat2: "C", effect: -0.40, se: 0.28 },
+    // B vs D (self-help vs group counselling) — 2 studies
+    { study: "Study 22", treat1: "B", treat2: "D", effect: -0.63, se: 0.30 },
+    { study: "Study 23", treat1: "B", treat2: "D", effect: -0.70, se: 0.35 },
+    // C vs D (individual vs group counselling) — 1 study
+    { study: "Study 24", treat1: "C", treat2: "D", effect: -0.15, se: 0.32 }
+  ];
+}
+
+/** Simulated dataset with known inconsistency.
+ *  5 treatments A-E. True effects: A=0, B=-0.3, C=-0.5, D=-0.8, E=-1.0.
+ *  10 consistent contrasts + 2 inconsistent A-D contrasts shifted by +0.5. */
+function getSimulatedData() {
+  const rng = xoshiro128ss(42);
+  const truth = { A: 0, B: -0.3, C: -0.5, D: -0.8, E: -1.0 };
+
+  function makeContrast(study, t1, t2, shiftBias) {
+    const trueEffect = truth[t1] - truth[t2];
+    const noise = normalRandom(rng) * 0.05;
+    const se = 0.10 + rng() * 0.20; // SE between 0.1 and 0.3
+    return {
+      study: study,
+      treat1: t1,
+      treat2: t2,
+      effect: Math.round((trueEffect + noise + (shiftBias ?? 0)) * 10000) / 10000,
+      se: Math.round(se * 10000) / 10000
+    };
+  }
+
+  return [
+    // 10 consistent contrasts
+    makeContrast("Sim01", "A", "B", 0),
+    makeContrast("Sim02", "A", "C", 0),
+    makeContrast("Sim03", "A", "E", 0),
+    makeContrast("Sim04", "B", "C", 0),
+    makeContrast("Sim05", "B", "D", 0),
+    makeContrast("Sim06", "B", "E", 0),
+    makeContrast("Sim07", "C", "D", 0),
+    makeContrast("Sim08", "C", "E", 0),
+    makeContrast("Sim09", "D", "E", 0),
+    makeContrast("Sim10", "A", "B", 0),
+    // 2 inconsistent A-D contrasts (shifted by +0.5)
+    makeContrast("Sim11_INC", "A", "D", 0.5),
+    makeContrast("Sim12_INC", "A", "D", 0.5)
+  ];
+}
+
+
+// ===== CSV PARSER =====
+
+/** Parse CSV text with columns: study, treat1, treat2, effect, se.
+ *  Auto-detects column mapping from header. */
+function parseContrastCSV(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) return [];
+
+  // Detect delimiter
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+  const header = lines[0].split(delim).map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+
+  // Map columns
+  const colMap = {};
+  const aliases = {
+    study: ['study', 'studyid', 'study_id', 'trial', 'id'],
+    treat1: ['treat1', 'treatment1', 'trt1', 't1', 'arm1'],
+    treat2: ['treat2', 'treatment2', 'trt2', 't2', 'arm2'],
+    effect: ['effect', 'lnor', 'logor', 'log_or', 'theta', 'yi', 'y', 'te', 'smd', 'md'],
+    se: ['se', 'stderr', 'std_err', 'sei', 'standarderror', 'selogor', 'se_logor']
+  };
+
+  for (const [field, names] of Object.entries(aliases)) {
+    const idx = header.findIndex(h => names.includes(h));
+    if (idx >= 0) colMap[field] = idx;
+  }
+
+  // Check required columns
+  for (const req of ['study', 'treat1', 'treat2', 'effect', 'se']) {
+    if (colMap[req] === undefined) {
+      throw new Error(`Missing column: ${req}. Found headers: ${header.join(', ')}`);
+    }
+  }
+
+  const contrasts = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(delim).map(c => c.trim().replace(/^['"]|['"]$/g, ''));
+    if (cols.length < 5) continue;
+
+    const eff = parseFloat(cols[colMap.effect]);
+    const se = parseFloat(cols[colMap.se]);
+    if (!isFinite(eff) || !isFinite(se) || se <= 0) continue;
+
+    contrasts.push({
+      study: cols[colMap.study],
+      treat1: cols[colMap.treat1],
+      treat2: cols[colMap.treat2],
+      effect: eff,
+      se: se
+    });
+  }
+  return contrasts;
+}
+
+
+// ===== NETWORK BUILDER =====
+
+/** Build network from contrasts. Multi-study edges pooled via inverse-variance. */
+function buildNetwork(contrasts) {
+  // Collect unique treatments
+  const nodeSet = new Set();
+  contrasts.forEach(c => { nodeSet.add(c.treat1); nodeSet.add(c.treat2); });
+  const nodes = Array.from(nodeSet).sort();
+
+  // Group contrasts by edge (canonical: alphabetically first treatment first)
+  const edgeMap = new Map();
+  contrasts.forEach(c => {
+    let t1 = c.treat1, t2 = c.treat2, eff = c.effect;
+    if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; eff = -eff; }
+    const key = `${t1}-${t2}`;
+    if (!edgeMap.has(key)) edgeMap.set(key, { treat1: t1, treat2: t2, contrasts: [] });
+    edgeMap.get(key).contrasts.push({ study: c.study, effect: eff, se: c.se });
+  });
+
+  // Pool multi-study edges via inverse-variance
+  const edges = [];
+  for (const [, e] of edgeMap) {
+    const cArr = e.contrasts;
+    const k = cArr.length;
+    let sumW = 0, sumWD = 0;
+    const studies = [];
+    cArr.forEach(c => {
+      const w = 1 / (c.se * c.se);
+      sumW += w;
+      sumWD += w * c.effect;
+      studies.push(c.study);
+    });
+    const dPooled = sumWD / sumW;
+    const sePooled = 1 / Math.sqrt(sumW);
+    edges.push({
+      treat1: e.treat1,
+      treat2: e.treat2,
+      effect: dPooled,
+      se: sePooled,
+      studies: studies,
+      k: k
+    });
+  }
+
+  return { nodes, edges };
+}
+
+
+// ===== SHEAF ENGINE =====
+
+/** Core sheaf-theoretic NMA consistency analysis.
+ *  - Builds precision-weighted coboundary map F
+ *  - Computes Laplacian L = F^T F
+ *  - Solves for node estimates (reference node fixed at 0)
+ *  - Computes edge residuals and inconsistency scores
+ *  - Eigendecomposition for spectral analysis
+ *  - Global Inconsistency Index (GII)
+ */
+function sheafAnalysis(network) {
+  const { nodes, edges } = network;
+  const n = nodes.length;
+  const m = edges.length;
+  const nodeIdx = {};
+  nodes.forEach((nd, i) => nodeIdx[nd] = i);
+
+  // --- Build coboundary map F (m x n), precision-weighted ---
+  // Convention: effect_e = x[treat2] - x[treat1] (treat2 relative to treat1)
+  // F[e,j] = +1/SE_e (treat2 = node_j)
+  // F[e,i] = -1/SE_e (treat1 = node_i)
+  // Data vector d[e] = effect_e / SE_e
+  const F = Array.from({length: m}, () => new Float64Array(n));
+  const d = new Float64Array(m);
+
+  for (let e = 0; e < m; e++) {
+    const edge = edges[e];
+    const i = nodeIdx[edge.treat1];
+    const j = nodeIdx[edge.treat2];
+    const w = 1 / edge.se;
+    F[e][i] = -w;  // treat1 gets negative
+    F[e][j] = w;   // treat2 gets positive
+    d[e] = edge.effect * w;
+  }
+
+  // --- Sheaf Laplacian: L = F^T * F (n x n) ---
+  const Ft = matTranspose(F);
+  const L = matMul(Ft, F);
+
+  // --- Solve for node estimates ---
+  // Fix node 0 as reference (x[0] = 0)
+  // Reduced system: L_red * x_red = (F^T * d)_red
+  const Ftd = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    for (let e = 0; e < m; e++) {
+      Ftd[i] += Ft[i][e] * d[e];
+    }
+  }
+
+  let nodeEstimates;
+  if (n === 1) {
+    nodeEstimates = [0];
+  } else {
+    // Remove row/col 0 for reduced system
+    const nRed = n - 1;
+    const Lred = Array.from({length: nRed}, (_, i) => {
+      const row = new Float64Array(nRed);
+      for (let j = 0; j < nRed; j++) {
+        row[j] = L[i+1][j+1];
+      }
+      return row;
+    });
+    const bRed = new Float64Array(nRed);
+    for (let i = 0; i < nRed; i++) bRed[i] = Ftd[i+1];
+
+    const xRed = matSolve(Lred, bRed);
+    nodeEstimates = new Float64Array(n);
+    nodeEstimates[0] = 0;
+    if (xRed) {
+      for (let i = 0; i < nRed; i++) nodeEstimates[i+1] = xRed[i];
+    }
+  }
+
+  // --- Edge residuals and scores ---
+  // r_e = d[e] - F[e] * x = (effect_e - (x[i] - x[j])) / SE_e
+  const residuals = new Float64Array(m);
+  const edgeScores = new Float64Array(m);
+  for (let e = 0; e < m; e++) {
+    let Fx = 0;
+    for (let i = 0; i < n; i++) Fx += F[e][i] * nodeEstimates[i];
+    residuals[e] = d[e] - Fx;
+    edgeScores[e] = residuals[e] * residuals[e];
+  }
+
+  // Normalize scores to 0-100% of max
+  let maxScore = 0;
+  for (let e = 0; e < m; e++) {
+    if (edgeScores[e] > maxScore) maxScore = edgeScores[e];
+  }
+  const normalizedScores = new Float64Array(m);
+  if (maxScore > 1e-15) {
+    for (let e = 0; e < m; e++) {
+      normalizedScores[e] = (edgeScores[e] / maxScore) * 100;
+    }
+  }
+
+  // --- Eigendecomposition of L ---
+  // Convert L to regular arrays for eigenSymmetric
+  const Larr = Array.from({length: n}, (_, i) => {
+    const row = new Float64Array(n);
+    for (let j = 0; j < n; j++) row[j] = L[i][j];
+    return row;
+  });
+  const eigen = eigenSymmetric(Larr);
+
+  // --- Global Inconsistency Index (GII) ---
+  // GII = total weighted residual sum of squares / degrees of freedom
+  // df = m - (n-1) = number of independent loops
+  // This is a Q-like statistic: 0 for perfectly consistent, >0 for inconsistent
+  let totalResidSS = 0;
+  for (let e = 0; e < m; e++) {
+    totalResidSS += residuals[e] * residuals[e];
+  }
+  const dfIncons = m - (n - 1);
+  const gii = dfIncons > 0 ? totalResidSS / dfIncons : 0;
+
+  return {
+    nodes,
+    edges,
+    nodeEstimates: Array.from(nodeEstimates),
+    edgeResiduals: Array.from(residuals),
+    edgeScores: Array.from(edgeScores),
+    normalizedScores: Array.from(normalizedScores),
+    laplacian: Larr,
+    eigenvalues: Array.from(eigen.values),
+    eigenvectors: eigen.vectors.map(v => Array.from(v)),
+    gii,
+    coboundary: F,
+    dataVector: Array.from(d)
+  };
+}
+
+
+// ===== APPLICATION STATE =====
+
+let currentData = null;    // Array of contrast objects
+let currentNetwork = null; // {nodes, edges}
+let currentResult = null;  // sheafAnalysis result
+
+// ===== UI FUNCTIONS =====
+
+/** Dark mode toggle */
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  const btn = document.querySelector('.dark-toggle');
+  btn.textContent = document.body.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
+}
+
+/** Tab switching */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    const tabId = 'tab-' + btn.getAttribute('data-tab');
+    document.getElementById(tabId).classList.add('active');
+  });
+});
+
+/** Convert contrasts array to CSV text */
+function contrastsToCSV(contrasts) {
+  let csv = 'study,treat1,treat2,effect,se\n';
+  contrasts.forEach(c => {
+    csv += `${c.study},${c.treat1},${c.treat2},${c.effect},${c.se}\n`;
+  });
+  return csv;
+}
+
+/** Dataset selection change */
+function onDatasetChange() {
+  const sel = document.getElementById('datasetSelect').value;
+  const ta = document.getElementById('dataTextarea');
+
+  if (sel === 'smoking') {
+    currentData = getSmokingData();
+    ta.value = contrastsToCSV(currentData);
+    ta.readOnly = true;
+  } else if (sel === 'simulated') {
+    currentData = getSimulatedData();
+    ta.value = contrastsToCSV(currentData);
+    ta.readOnly = true;
+  } else {
+    ta.value = 'study,treat1,treat2,effect,se\n';
+    ta.readOnly = false;
+    currentData = null;
+  }
+
+  // Reset state
+  currentNetwork = null;
+  currentResult = null;
+  document.getElementById('networkSummary').innerHTML = '<span class="text-muted">Select a dataset and click "Analyze Consistency" to begin.</span>';
+  document.getElementById('edgeTable').innerHTML = '';
+  document.getElementById('nodeEstimatesCard').style.display = 'none';
+  document.getElementById('edgeScoresCard').style.display = 'none';
+  document.getElementById('laplacianCard').style.display = 'none';
+  document.getElementById('analysisStatus').textContent = '';
+}
+
+/** Run sheaf analysis */
+function runAnalysis() {
+  const statusEl = document.getElementById('analysisStatus');
+  try {
+    const sel = document.getElementById('datasetSelect').value;
+    const ta = document.getElementById('dataTextarea');
+
+    if (sel === 'custom') {
+      currentData = parseContrastCSV(ta.value);
+      if (currentData.length === 0) {
+        statusEl.textContent = 'Error: No valid contrasts found in CSV.';
+        statusEl.className = 'text-red text-sm';
+        return;
+      }
+    } else if (!currentData) {
+      onDatasetChange();
+    }
+
+    // Build network
+    currentNetwork = buildNetwork(currentData);
+
+    // Run sheaf analysis
+    currentResult = sheafAnalysis(currentNetwork);
+
+    // Update UI
+    renderNetworkSummary();
+    renderNodeEstimates();
+    renderEdgeScores();
+    renderNetworkGraph();
+    renderLaplacian();
+    renderSpectrum();
+
+    statusEl.textContent = `Analysis complete. ${currentNetwork.nodes.length} treatments, ${currentNetwork.edges.length} edges, GII = ${currentResult.gii.toFixed(4)}`;
+    statusEl.className = 'text-green text-sm';
+
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'text-red text-sm';
+    console.error(err);
+  }
+}
+
+/** Render network summary */
+function renderNetworkSummary() {
+  const net = currentNetwork;
+  const res = currentResult;
+  const el = document.getElementById('networkSummary');
+
+  let html = '<div class="grid-3 mt-8">';
+  html += `<div><strong>Treatments:</strong> ${escapeHtml(net.nodes.join(', '))}</div>`;
+  html += `<div><strong>Edges:</strong> ${net.edges.length}</div>`;
+  html += `<div><strong>Total studies:</strong> ${currentData.length}</div>`;
+  html += '</div>';
+  html += `<div class="mt-8"><strong>Global Inconsistency Index (GII):</strong> <span class="${res.gii < 0.5 ? 'text-green' : (res.gii < 2 ? 'text-orange' : 'text-red')}">${res.gii.toFixed(4)}</span></div>`;
+
+  el.innerHTML = html;
+
+  // Edge overview table
+  const tbl = document.getElementById('edgeTable');
+  let th = '<table class="data-table"><thead><tr><th>Edge</th><th>k</th><th>Pooled Effect</th><th>SE</th><th>Studies</th></tr></thead><tbody>';
+  net.edges.forEach(e => {
+    th += `<tr><td>${escapeHtml(e.treat1)}-${escapeHtml(e.treat2)}</td><td class="num">${e.k}</td><td class="num">${e.effect.toFixed(4)}</td><td class="num">${e.se.toFixed(4)}</td><td class="text-sm">${escapeHtml(e.studies.join(', '))}</td></tr>`;
+  });
+  th += '</tbody></table>';
+  tbl.innerHTML = th;
+}
+
+/** Render node estimates */
+function renderNodeEstimates() {
+  const res = currentResult;
+  const card = document.getElementById('nodeEstimatesCard');
+  card.style.display = 'block';
+
+  let html = '<table class="data-table"><thead><tr><th>Treatment</th><th>Estimate (log OR)</th><th>Rank</th></tr></thead><tbody>';
+
+  // Sort by estimate for ranking
+  const ranked = res.nodes.map((nd, i) => ({ name: nd, est: res.nodeEstimates[i] }));
+  ranked.sort((a, b) => a.est - b.est);
+  ranked.forEach((nd, rank) => {
+    html += `<tr><td>${escapeHtml(nd.name)}</td><td class="num">${nd.est.toFixed(4)}</td><td class="num">${rank + 1}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('nodeEstimatesTable').innerHTML = html;
+}
+
+/** Render edge inconsistency scores */
+function renderEdgeScores() {
+  const res = currentResult;
+  const card = document.getElementById('edgeScoresCard');
+  card.style.display = 'block';
+
+  // Sort edges by score descending
+  const scored = res.edges.map((e, i) => ({
+    label: `${e.treat1}-${e.treat2}`,
+    residual: res.edgeResiduals[i],
+    rawScore: res.edgeScores[i],
+    normScore: res.normalizedScores[i]
+  }));
+  scored.sort((a, b) => b.normScore - a.normScore);
+
+  let html = '<table class="data-table"><thead><tr><th>Edge</th><th>Residual</th><th>Score (r&sup2;)</th><th>Normalized (%)</th><th>Bar</th></tr></thead><tbody>';
+  scored.forEach(e => {
+    const color = e.normScore < 10 ? 'var(--green)' : (e.normScore < 50 ? 'var(--orange)' : 'var(--red)');
+    html += `<tr>
+      <td>${escapeHtml(e.label)}</td>
+      <td class="num">${e.residual.toFixed(4)}</td>
+      <td class="num">${e.rawScore.toFixed(4)}</td>
+      <td class="num">${e.normScore.toFixed(1)}%</td>
+      <td><div class="score-bar-container"><div class="score-bar"><div class="score-bar-fill" style="width:${e.normScore}%;background:${color}"></div></div></div></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('edgeScoresTable').innerHTML = html;
+}
+
+/** Render network graph on canvas */
+function renderNetworkGraph() {
+  if (!currentResult) return;
+  const canvas = document.getElementById('networkCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // High-DPI setup
+  const dpr = window.devicePixelRatio ?? 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  const isDark = document.body.classList.contains('dark');
+  ctx.clearRect(0, 0, W, H);
+
+  const { nodes, edges } = currentNetwork;
+  const res = currentResult;
+  const n = nodes.length;
+
+  // Layout: circular
+  const cx = W / 2, cy = H / 2;
+  const radius = Math.min(W, H) * 0.35;
+  const pos = {};
+  nodes.forEach((nd, i) => {
+    const angle = (2 * Math.PI * i / n) - Math.PI / 2;
+    pos[nd] = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+  });
+
+  // Draw edges
+  edges.forEach((e, i) => {
+    const p1 = pos[e.treat1], p2 = pos[e.treat2];
+    const score = res.normalizedScores[i];
+    const lw = Math.max(1.5, Math.min(8, e.k * 2));
+
+    // Color: green to red based on inconsistency score
+    let r, g, b;
+    if (score < 50) {
+      const t = score / 50;
+      r = Math.round(22 + t * (234 - 22));
+      g = Math.round(163 + t * (88 - 163));
+      b = Math.round(74 + t * (12 - 74));
+    } else {
+      const t = (score - 50) / 50;
+      r = Math.round(234 + t * (220 - 234));
+      g = Math.round(88 + t * (38 - 88));
+      b = Math.round(12 + t * (38 - 12));
+    }
+
+    ctx.strokeStyle = `rgb(${r},${g},${b})`;
+    ctx.lineWidth = lw;
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+
+    // Edge label
+    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+    ctx.fillStyle = isDark ? '#94a3b8' : '#6b7280';
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${e.effect.toFixed(2)} (k=${e.k})`, mx, my - 6);
+  });
+
+  // Draw nodes
+  nodes.forEach((nd, i) => {
+    const p = pos[nd];
+    const nodeR = 22;
+
+    ctx.fillStyle = isDark ? '#1e40af' : '#2563eb';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, nodeR, 0, 2 * Math.PI);
+    ctx.fill();
+
+    ctx.strokeStyle = isDark ? '#60a5fa' : '#1d4ed8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(nd, p.x, p.y);
+  });
+}
+
+/** Render Laplacian matrix */
+function renderLaplacian() {
+  if (!currentResult) return;
+  const card = document.getElementById('laplacianCard');
+  card.style.display = 'block';
+  const L = currentResult.laplacian;
+  const nodes = currentResult.nodes;
+  const n = nodes.length;
+
+  let html = '<table class="data-table"><thead><tr><th></th>';
+  nodes.forEach(nd => { html += `<th>${escapeHtml(nd)}</th>`; });
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i < n; i++) {
+    html += `<tr><td><strong>${escapeHtml(nodes[i])}</strong></td>`;
+    for (let j = 0; j < n; j++) {
+      html += `<td class="num">${L[i][j].toFixed(3)}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('laplacianTable').innerHTML = html;
+}
+
+/** Render eigenvalue spectrum chart and summary */
+function renderSpectrum() {
+  if (!currentResult) return;
+  const canvas = document.getElementById('spectrumCanvas');
+  const ctx = canvas.getContext('2d');
+  const res = currentResult;
+
+  // High-DPI
+  const dpr = window.devicePixelRatio ?? 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  const isDark = document.body.classList.contains('dark');
+  ctx.clearRect(0, 0, W, H);
+
+  const eigenvalues = res.eigenvalues;
+  const n = eigenvalues.length;
+  const maxEig = Math.max(...eigenvalues, 1);
+
+  // Margins
+  const ml = 60, mr = 30, mt = 20, mb = 50;
+  const plotW = W - ml - mr, plotH = H - mt - mb;
+
+  // Axes
+  ctx.strokeStyle = isDark ? '#475569' : '#d1d5db';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(ml, mt);
+  ctx.lineTo(ml, mt + plotH);
+  ctx.lineTo(ml + plotW, mt + plotH);
+  ctx.stroke();
+
+  // Y axis label
+  ctx.fillStyle = isDark ? '#94a3b8' : '#6b7280';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.save();
+  ctx.translate(15, mt + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Eigenvalue', 0, 0);
+  ctx.restore();
+
+  // X axis label
+  ctx.fillText('Index', ml + plotW / 2, H - 5);
+
+  // Bars
+  const barW = Math.max(10, Math.min(50, plotW / n - 4));
+  const gap = (plotW - barW * n) / (n + 1);
+
+  eigenvalues.forEach((ev, i) => {
+    const x = ml + gap + i * (barW + gap);
+    const barH = (ev / maxEig) * plotH;
+    const y = mt + plotH - barH;
+
+    const isZero = ev < 1e-8;
+    ctx.fillStyle = isZero ? (isDark ? '#334155' : '#e5e7eb') :
+                    (isDark ? '#60a5fa' : '#2563eb');
+    ctx.fillRect(x, y, barW, barH);
+
+    // Value label
+    ctx.fillStyle = isDark ? '#94a3b8' : '#6b7280';
+    ctx.font = '10px Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(ev.toFixed(2), x + barW / 2, y - 4);
+
+    // Index label
+    ctx.fillText(String(i + 1), x + barW / 2, mt + plotH + 14);
+  });
+
+  // Y ticks
+  ctx.fillStyle = isDark ? '#94a3b8' : '#6b7280';
+  ctx.font = '10px Consolas, monospace';
+  ctx.textAlign = 'right';
+  for (let tick = 0; tick <= 4; tick++) {
+    const val = (maxEig * tick) / 4;
+    const y = mt + plotH - (tick / 4) * plotH;
+    ctx.fillText(val.toFixed(1), ml - 6, y + 3);
+    ctx.strokeStyle = isDark ? '#334155' : '#e5e7eb';
+    ctx.beginPath();
+    ctx.moveTo(ml, y);
+    ctx.lineTo(ml + plotW, y);
+    ctx.stroke();
+  }
+
+  // Spectral summary
+  const summaryEl = document.getElementById('spectralSummary');
+  const nZero = eigenvalues.filter(v => v < 1e-8).length;
+  const nNonZero = n - nZero;
+
+  let html = `<div class="mt-8">`;
+  html += `<p><strong>Dimension:</strong> ${n} x ${n} Laplacian</p>`;
+  html += `<p><strong>Zero eigenvalues:</strong> ${nZero} (connected components)</p>`;
+  html += `<p><strong>Non-zero eigenvalues:</strong> ${nNonZero}</p>`;
+  html += `<p><strong>Smallest non-zero (algebraic connectivity):</strong> ${eigenvalues.find(v => v > 1e-8)?.toFixed(6) ?? 'N/A'}</p>`;
+  html += `<p><strong>Largest:</strong> ${eigenvalues[n-1].toFixed(6)}</p>`;
+  html += `<p><strong>GII = sum(nonzero) / (n-1):</strong> <span class="${res.gii < 0.5 ? 'text-green' : (res.gii < 2 ? 'text-orange' : 'text-red')}">${res.gii.toFixed(6)}</span></p>`;
+  html += `<p class="text-muted mt-8">Low GII indicates the network is globally consistent. High GII suggests systematic inconsistency in treatment effect estimates.</p>`;
+  html += `</div>`;
+  summaryEl.innerHTML = html;
+
+  // Eigenvalue table
+  const tblEl = document.getElementById('eigenTable');
+  let th = '<table class="data-table"><thead><tr><th>#</th><th>Eigenvalue</th><th>Status</th></tr></thead><tbody>';
+  eigenvalues.forEach((ev, i) => {
+    const status = ev < 1e-8 ? '<span class="badge badge-blue">Zero</span>' : '<span class="badge badge-green">Non-zero</span>';
+    th += `<tr><td class="num">${i+1}</td><td class="num">${ev.toFixed(6)}</td><td>${status}</td></tr>`;
+  });
+  th += '</tbody></table>';
+  tblEl.innerHTML = th;
+}
+
+
+// ===== EXPORT FUNCTIONS =====
+
+function exportCSV() {
+  if (!currentResult) { alert('Run analysis first.'); return; }
+  const res = currentResult;
+
+  let csv = '=== Node Estimates ===\n';
+  csv += 'Treatment,Estimate\n';
+  res.nodes.forEach((nd, i) => {
+    csv += `${nd},${res.nodeEstimates[i].toFixed(6)}\n`;
+  });
+
+  csv += '\n=== Edge Inconsistency Scores ===\n';
+  csv += 'Edge,Effect,SE,Residual,Score,Normalized%\n';
+  res.edges.forEach((e, i) => {
+    csv += `${e.treat1}-${e.treat2},${e.effect.toFixed(6)},${e.se.toFixed(6)},${res.edgeResiduals[i].toFixed(6)},${res.edgeScores[i].toFixed(6)},${res.normalizedScores[i].toFixed(1)}\n`;
+  });
+
+  csv += `\n=== Global Inconsistency Index ===\nGII,${res.gii.toFixed(6)}\n`;
+
+  csv += '\n=== Eigenvalues ===\nIndex,Value\n';
+  res.eigenvalues.forEach((v, i) => csv += `${i+1},${v.toFixed(6)}\n`);
+
+  downloadBlob(csv, 'sheaf_nma_results.csv', 'text/csv');
+}
+
+function exportJSON() {
+  if (!currentResult) { alert('Run analysis first.'); return; }
+  const res = currentResult;
+  const out = {
+    nodes: res.nodes,
+    nodeEstimates: res.nodeEstimates.map(v => +v.toFixed(6)),
+    edges: res.edges.map((e, i) => ({
+      edge: `${e.treat1}-${e.treat2}`,
+      effect: +e.effect.toFixed(6),
+      se: +e.se.toFixed(6),
+      k: e.k,
+      residual: +res.edgeResiduals[i].toFixed(6),
+      score: +res.edgeScores[i].toFixed(6),
+      normalizedScore: +res.normalizedScores[i].toFixed(1)
+    })),
+    gii: +res.gii.toFixed(6),
+    eigenvalues: res.eigenvalues.map(v => +v.toFixed(6))
+  };
+  const json = JSON.stringify(out, null, 2);
+  downloadBlob(json, 'sheaf_nma_results.json', 'application/json');
+}
+
+function exportLaTeX() {
+  if (!currentResult) { alert('Run analysis first.'); return; }
+  const res = currentResult;
+  let tex = '% SheafNMA LaTeX Export\n\n';
+
+  tex += '\\begin{table}[ht]\n\\centering\n\\caption{Node Estimates}\n';
+  tex += '\\begin{tabular}{lc}\n\\hline\n';
+  tex += 'Treatment & Estimate (log OR) \\\\\n\\hline\n';
+  res.nodes.forEach((nd, i) => {
+    tex += `${nd} & ${res.nodeEstimates[i].toFixed(4)} \\\\\n`;
+  });
+  tex += '\\hline\n\\end{tabular}\n\\end{table}\n\n';
+
+  tex += '\\begin{table}[ht]\n\\centering\n\\caption{Edge Inconsistency Scores}\n';
+  tex += '\\begin{tabular}{lcccc}\n\\hline\n';
+  tex += 'Edge & Effect & Residual & Score & Normalized (\\%) \\\\\n\\hline\n';
+  res.edges.forEach((e, i) => {
+    tex += `${e.treat1}--${e.treat2} & ${e.effect.toFixed(4)} & ${res.edgeResiduals[i].toFixed(4)} & ${res.edgeScores[i].toFixed(4)} & ${res.normalizedScores[i].toFixed(1)} \\\\\n`;
+  });
+  tex += '\\hline\n\\end{tabular}\n\\end{table}\n\n';
+
+  tex += `GII = ${res.gii.toFixed(6)}\n`;
+
+  downloadBlob(tex, 'sheaf_nma_results.tex', 'text/plain');
+}
+
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+
+// ===== TEST SUITE =====
+
+function runTests() {
+  const panel = document.getElementById('testPanel');
+  const results = document.getElementById('testResults');
+  panel.classList.add('visible');
+  results.innerHTML = '';
+
+  let passed = 0, failed = 0;
+  const log = [];
+
+  function assert(cond, name) {
+    if (cond) {
+      passed++;
+      log.push(`<div class="test-result test-pass">PASS: ${escapeHtml(name)}</div>`);
+    } else {
+      failed++;
+      log.push(`<div class="test-result test-fail">FAIL: ${escapeHtml(name)}</div>`);
+    }
+  }
+
+  function approx(a, b, tol, name) {
+    const ok = Math.abs(a - b) < (tol ?? 1e-6);
+    if (ok) {
+      passed++;
+      log.push(`<div class="test-result test-pass">PASS: ${escapeHtml(name)} (${a.toFixed(6)} ~ ${b.toFixed(6)})</div>`);
+    } else {
+      failed++;
+      log.push(`<div class="test-result test-fail">FAIL: ${escapeHtml(name)} (got ${a.toFixed(6)}, expected ${b.toFixed(6)}, diff=${Math.abs(a-b).toFixed(8)})</div>`);
+    }
+  }
+
+  // --- Linear Algebra Tests ---
+  log.push('<div class="test-result" style="font-weight:700;margin-top:8px;">--- Linear Algebra ---</div>');
+
+  // matMul
+  {
+    const A = [[1,2],[3,4]];
+    const B = [[5,6],[7,8]];
+    const C = matMul(A, B);
+    approx(C[0][0], 19, 1e-10, 'matMul [0][0] = 19');
+    approx(C[0][1], 22, 1e-10, 'matMul [0][1] = 22');
+    approx(C[1][0], 43, 1e-10, 'matMul [1][0] = 43');
+    approx(C[1][1], 50, 1e-10, 'matMul [1][1] = 50');
+  }
+
+  // matTranspose
+  {
+    const A = [[1,2,3],[4,5,6]];
+    const T = matTranspose(A);
+    assert(T.length === 3 && T[0].length === 2, 'matTranspose dimensions 2x3 -> 3x2');
+    approx(T[0][1], 4, 1e-10, 'matTranspose [0][1] = 4');
+    approx(T[2][0], 3, 1e-10, 'matTranspose [2][0] = 3');
+  }
+
+  // matInverse
+  {
+    const A = [[4,7],[2,6]];
+    const Ainv = matInverse(A);
+    assert(Ainv !== null, 'matInverse non-singular');
+    approx(Ainv[0][0], 0.6, 1e-10, 'matInverse [0][0] = 0.6');
+    approx(Ainv[0][1], -0.7, 1e-10, 'matInverse [0][1] = -0.7');
+    approx(Ainv[1][0], -0.2, 1e-10, 'matInverse [1][0] = -0.2');
+    approx(Ainv[1][1], 0.4, 1e-10, 'matInverse [1][1] = 0.4');
+  }
+
+  // matInverse singular
+  {
+    const S = [[1,2],[2,4]];
+    assert(matInverse(S) === null, 'matInverse returns null for singular');
+  }
+
+  // matSolve
+  {
+    const A = [[2,1],[5,3]];
+    const b = [4,7];
+    const x = matSolve(A, b);
+    assert(x !== null, 'matSolve non-null');
+    approx(x[0], 5, 1e-10, 'matSolve x[0] = 5');
+    approx(x[1], -6, 1e-10, 'matSolve x[1] = -6');
+  }
+
+  // dot
+  {
+    approx(dot([1,2,3], [4,5,6]), 32, 1e-10, 'dot([1,2,3],[4,5,6]) = 32');
+  }
+
+  // eigenSymmetric — 2x2
+  {
+    const M = [[2,1],[1,2]];
+    const eig = eigenSymmetric(M);
+    approx(eig.values[0], 1, 1e-8, 'eigenSymmetric 2x2: lambda_0 = 1');
+    approx(eig.values[1], 3, 1e-8, 'eigenSymmetric 2x2: lambda_1 = 3');
+  }
+
+  // eigenSymmetric — identity
+  {
+    const I3 = [[1,0,0],[0,1,0],[0,0,1]];
+    const eig = eigenSymmetric(I3);
+    approx(eig.values[0], 1, 1e-8, 'eigenSymmetric I3: all eigenvalues = 1 (min)');
+    approx(eig.values[2], 1, 1e-8, 'eigenSymmetric I3: all eigenvalues = 1 (max)');
+  }
+
+  // --- Sheaf Engine Tests ---
+  log.push('<div class="test-result" style="font-weight:700;margin-top:8px;">--- Sheaf Engine ---</div>');
+
+  // Test 1: Consistent triangle
+  {
+    const contrasts = [
+      { study: "T1", treat1: "A", treat2: "B", effect: -0.3, se: 0.1 },
+      { study: "T2", treat1: "A", treat2: "C", effect: -0.5, se: 0.1 },
+      { study: "T3", treat1: "B", treat2: "C", effect: -0.2, se: 0.1 }
+    ];
+    const net = buildNetwork(contrasts);
+    const res = sheafAnalysis(net);
+
+    // All residuals should be approximately 0
+    const maxResidual = Math.max(...res.edgeResiduals.map(Math.abs));
+    assert(maxResidual < 0.01, 'Consistent triangle: all residuals near 0 (max=' + maxResidual.toFixed(6) + ')');
+    assert(res.gii < 0.01, 'Consistent triangle: GII near 0 (gii=' + res.gii.toFixed(6) + ')');
+
+    // Node estimates should match true effects
+    const nodeA = res.nodeEstimates[res.nodes.indexOf('A')];
+    const nodeB = res.nodeEstimates[res.nodes.indexOf('B')];
+    const nodeC = res.nodeEstimates[res.nodes.indexOf('C')];
+    approx(nodeA, 0, 1e-6, 'Consistent triangle: A = 0 (reference)');
+    approx(nodeB, -0.3, 0.01, 'Consistent triangle: B ~ -0.3');
+    approx(nodeC, -0.5, 0.01, 'Consistent triangle: C ~ -0.5');
+  }
+
+  // Test 2: Inconsistent triangle
+  {
+    const contrasts = [
+      { study: "T1", treat1: "A", treat2: "B", effect: -0.3, se: 0.1 },
+      { study: "T2", treat1: "A", treat2: "C", effect: -0.5, se: 0.1 },
+      { study: "T3", treat1: "B", treat2: "C", effect: 0.5, se: 0.1 }
+    ];
+    const net = buildNetwork(contrasts);
+    const res = sheafAnalysis(net);
+
+    // B-C edge should have highest inconsistency score
+    const bcIdx = res.edges.findIndex(e => (e.treat1 === 'B' && e.treat2 === 'C') || (e.treat1 === 'C' && e.treat2 === 'B'));
+    const bcScore = res.normalizedScores[bcIdx];
+    assert(bcScore > 50, 'Inconsistent triangle: B-C has high score (' + bcScore.toFixed(1) + '%)');
+    assert(res.gii > 0.1, 'Inconsistent triangle: GII > 0.1 (gii=' + res.gii.toFixed(4) + ')');
+
+    // In a symmetric triangle (equal SEs), inconsistency distributes equally across all edges.
+    // B-C should be tied for highest score (within rounding tolerance).
+    let maxS = 0;
+    for (let i = 0; i < res.normalizedScores.length; i++) {
+      if (res.normalizedScores[i] > maxS) maxS = res.normalizedScores[i];
+    }
+    assert(Math.abs(bcScore - maxS) < 1, 'Inconsistent triangle: B-C tied for highest score (diff=' + Math.abs(bcScore - maxS).toFixed(2) + ')');
+  }
+
+  // Test 3: Laplacian is symmetric
+  {
+    const data = getSmokingData();
+    const net = buildNetwork(data);
+    const res = sheafAnalysis(net);
+    const L = res.laplacian;
+    let symOk = true;
+    for (let i = 0; i < L.length; i++) {
+      for (let j = i + 1; j < L.length; j++) {
+        if (Math.abs(L[i][j] - L[j][i]) > 1e-10) { symOk = false; break; }
+      }
+      if (!symOk) break;
+    }
+    assert(symOk, 'Smoking: Laplacian is symmetric');
+  }
+
+  // Test 4: Eigenvalues non-negative
+  {
+    const data = getSmokingData();
+    const net = buildNetwork(data);
+    const res = sheafAnalysis(net);
+    const allNonNeg = res.eigenvalues.every(v => v >= -1e-8);
+    assert(allNonNeg, 'Smoking: All eigenvalues non-negative');
+  }
+
+  // Test 5: At least one zero eigenvalue
+  {
+    const data = getSmokingData();
+    const net = buildNetwork(data);
+    const res = sheafAnalysis(net);
+    const hasZero = res.eigenvalues.some(v => Math.abs(v) < 1e-6);
+    assert(hasZero, 'Smoking: At least one zero eigenvalue (connected graph)');
+  }
+
+  // Test 6: Eigenvectors orthogonal
+  {
+    const data = getSmokingData();
+    const net = buildNetwork(data);
+    const res = sheafAnalysis(net);
+    let orthOk = true;
+    for (let i = 0; i < res.eigenvectors.length; i++) {
+      for (let j = i + 1; j < res.eigenvectors.length; j++) {
+        const d = Math.abs(dot(res.eigenvectors[i], res.eigenvectors[j]));
+        if (d > 1e-6) { orthOk = false; break; }
+      }
+      if (!orthOk) break;
+    }
+    assert(orthOk, 'Smoking: Eigenvectors are orthogonal');
+  }
+
+  // Test 7: Simulated — A-D edges ranked #1 by inconsistency
+  {
+    const data = getSimulatedData();
+    const net = buildNetwork(data);
+    const res = sheafAnalysis(net);
+
+    // Find A-D edge
+    const adIdx = res.edges.findIndex(e =>
+      (e.treat1 === 'A' && e.treat2 === 'D') || (e.treat1 === 'D' && e.treat2 === 'A'));
+    assert(adIdx >= 0, 'Simulated: A-D edge exists');
+    if (adIdx >= 0) {
+      const adScore = res.normalizedScores[adIdx];
+      assert(adScore === 100, 'Simulated: A-D edge ranked #1 by inconsistency (score=' + adScore.toFixed(1) + '%)');
+    }
+  }
+
+  // Test 8: Smoking produces valid output (no NaN)
+  {
+    const data = getSmokingData();
+    const net = buildNetwork(data);
+    const res = sheafAnalysis(net);
+    const noNaN = res.nodeEstimates.every(isFinite) &&
+                  res.edgeScores.every(isFinite) &&
+                  res.eigenvalues.every(isFinite) &&
+                  isFinite(res.gii);
+    assert(noNaN, 'Smoking: No NaN in output');
+  }
+
+  // Test 9: Network builder pools multi-study edges correctly
+  {
+    const contrasts = [
+      { study: "S1", treat1: "A", treat2: "B", effect: -0.4, se: 0.2 },
+      { study: "S2", treat1: "A", treat2: "B", effect: -0.6, se: 0.2 }
+    ];
+    const net = buildNetwork(contrasts);
+    assert(net.edges.length === 1, 'Network builder: 2 A-B studies -> 1 edge');
+    assert(net.edges[0].k === 2, 'Network builder: k=2 for pooled edge');
+    // Pooled: w = 1/0.04 = 25 each; sum_w = 50; sum_wd = 25*-0.4 + 25*-0.6 = -25
+    // d_pooled = -25/50 = -0.5; SE_pooled = 1/sqrt(50) ~ 0.1414
+    approx(net.edges[0].effect, -0.5, 1e-6, 'Network builder: pooled effect = -0.5');
+    approx(net.edges[0].se, 1/Math.sqrt(50), 1e-6, 'Network builder: pooled SE');
+  }
+
+  // Test 10: CSV parser
+  {
+    const csv = 'study,treat1,treat2,effect,se\nS1,A,B,-0.3,0.1\nS2,B,C,-0.2,0.15\n';
+    const parsed = parseContrastCSV(csv);
+    assert(parsed.length === 2, 'CSV parser: 2 rows parsed');
+    approx(parsed[0].effect, -0.3, 1e-10, 'CSV parser: effect = -0.3');
+    assert(parsed[1].treat2 === 'C', 'CSV parser: treat2 = C');
+  }
+
+  // Test 11: normalCDF
+  {
+    approx(normalCDF(0), 0.5, 1e-6, 'normalCDF(0) = 0.5');
+    approx(normalCDF(1.96), 0.975, 0.001, 'normalCDF(1.96) ~ 0.975');
+    approx(normalCDF(-1.96), 0.025, 0.001, 'normalCDF(-1.96) ~ 0.025');
+  }
+
+  // Test 12: xoshiro128** is deterministic
+  {
+    const r1 = xoshiro128ss(42);
+    const r2 = xoshiro128ss(42);
+    const v1 = [r1(), r1(), r1()];
+    const v2 = [r2(), r2(), r2()];
+    assert(v1[0] === v2[0] && v1[1] === v2[1] && v1[2] === v2[2], 'xoshiro128** deterministic with same seed');
+  }
+
+  // Test 13: Simulated data has inconsistent contrasts with expected shift
+  {
+    const data = getSimulatedData();
+    const incStudies = data.filter(d => d.study.includes('INC'));
+    assert(incStudies.length === 2, 'Simulated: 2 inconsistent studies');
+    // A-D true effect is 0 - (-0.8) = 0.8. With +0.5 shift, expect ~1.3
+    const allShifted = incStudies.every(s => s.effect > 1.0);
+    assert(allShifted, 'Simulated: Inconsistent A-D contrasts shifted positive');
+  }
+
+  // Test 14: escapeHtml
+  {
+    const esc = escapeHtml('<script>"test"&\'foo\'');
+    assert(!esc.includes('<') && !esc.includes('>') && !esc.includes('"') && !esc.includes("'"),
+      'escapeHtml removes <, >, ", \'');
+    assert(esc.includes('&lt;') && esc.includes('&amp;'), 'escapeHtml uses entities');
+  }
+
+  // Render summary
+  const summary = `<div class="test-summary ${failed === 0 ? 'text-green' : 'text-red'}">Total: ${passed + failed} | Passed: ${passed} | Failed: ${failed}</div>`;
+  results.innerHTML = log.join('') + summary;
+}
+
+function closeTests() {
+  document.getElementById('testPanel').classList.remove('visible');
+}
+
+
+// ===== INITIALIZATION =====
+(function init() {
+  // Load default dataset
+  onDatasetChange();
+})();
+</script>
+</body>
+</html>
