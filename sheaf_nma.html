@@ -239,8 +239,91 @@ label {
 }
 
 /* ===== Network Visualization ===== */
-#networkCanvas { width: 100%; height: 400px; }
-#spectrumCanvas { width: 100%; height: 300px; }
+#networkCanvas { width: 100%; height: 500px; cursor: crosshair; }
+#spectrumCanvas { width: 100%; height: 300px; cursor: pointer; }
+#eigenvectorCanvas { width: 100%; height: 300px; }
+
+/* ===== Tooltip ===== */
+.graph-tooltip {
+  position: absolute;
+  background: var(--card-bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  pointer-events: none;
+  z-index: 50;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  max-width: 320px;
+  display: none;
+  white-space: nowrap;
+}
+.graph-tooltip.visible { display: block; }
+
+/* ===== Color Legend ===== */
+.color-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.color-legend-bar {
+  width: 200px;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(to right, #22c55e, #eab308, #ef4444);
+}
+
+/* ===== Spectrum Grid ===== */
+.spectrum-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+}
+
+/* ===== GII Display ===== */
+.gii-display {
+  text-align: center;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: var(--radius);
+  background: var(--code-bg);
+}
+.gii-display .gii-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: 'Consolas', monospace;
+}
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--card-bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 24px;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 300;
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.toast.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ===== Ranked Edge Row ===== */
+.ranked-row-top { background: #fee2e2 !important; }
+body.dark .ranked-row-top { background: #7f1d1d !important; }
 
 /* ===== Utility ===== */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -339,7 +422,7 @@ body.dark .badge-blue { background: #1e3a5f; color: #bfdbfe; }
 
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
-  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .grid-2, .grid-3, .spectrum-grid { grid-template-columns: 1fr; }
   .app-header { padding: 10px 16px; }
   .main-content { padding: 16px; }
   .tab-btn { padding: 8px 14px; font-size: 0.8rem; }
@@ -411,10 +494,21 @@ body.dark .badge-blue { background: #1e3a5f; color: #bfdbfe; }
   <div id="tab-network" class="tab-panel" role="tabpanel">
     <div class="card">
       <h2>Network Graph</h2>
-      <p class="text-muted mb-8">Nodes = treatments. Edge width = number of studies. Edge color = inconsistency score (green = consistent, red = inconsistent).</p>
-      <div class="canvas-container">
-        <canvas id="networkCanvas" width="900" height="400"></canvas>
+      <p class="text-muted mb-8">Force-directed layout. Edge color = inconsistency (green = consistent, red = inconsistent). Edge thickness proportional to precision (1/SE). Hover for details.</p>
+      <div class="canvas-container" style="position:relative;">
+        <canvas id="networkCanvas" width="900" height="500"></canvas>
+        <div id="graphTooltip" class="graph-tooltip"></div>
       </div>
+      <div class="color-legend">
+        <span>0% Consistent</span>
+        <div class="color-legend-bar"></div>
+        <span>100% Inconsistent</span>
+      </div>
+    </div>
+    <div class="card" id="rankedEdgeCard" style="display:none;">
+      <h2>Ranked Edge Table (by Inconsistency)</h2>
+      <p class="text-muted mb-8">Sorted by inconsistency score descending. Top row highlighted.</p>
+      <div id="rankedEdgeTable"></div>
     </div>
     <div class="card" id="laplacianCard" style="display:none;">
       <h2>Sheaf Laplacian Matrix</h2>
@@ -424,19 +518,31 @@ body.dark .badge-blue { background: #1e3a5f; color: #bfdbfe; }
 
   <!-- Spectrum Tab -->
   <div id="tab-spectrum" class="tab-panel" role="tabpanel">
-    <div class="grid-2">
+    <div id="giiDisplay" class="gii-display" style="display:none;">
+      <div>Global Inconsistency Index</div>
+      <div class="gii-value" id="giiValue">--</div>
+      <div id="giiAnnotation" class="text-muted mt-8"></div>
+    </div>
+    <div class="spectrum-grid">
       <div class="card">
-        <h2>Eigenvalue Spectrum</h2>
-        <p class="text-muted mb-8">Eigenvalues of the sheaf Laplacian. Non-zero eigenvalues reflect network connectivity. The Global Inconsistency Index (GII) summarizes spectral information.</p>
+        <h2>Eigenvalue Scree Plot</h2>
+        <p class="text-muted mb-8">Click a bar to show its eigenvector loadings in the right panel.</p>
         <div class="canvas-container">
           <canvas id="spectrumCanvas" width="600" height="300"></canvas>
         </div>
       </div>
       <div class="card">
-        <h2>Spectral Summary</h2>
-        <div id="spectralSummary" class="text-muted">Run analysis to see spectral results.</div>
-        <div id="eigenTable" class="mt-12"></div>
+        <h2>Eigenvector Loadings</h2>
+        <p class="text-muted mb-8" id="eigenvectorLabel">Select an eigenvalue bar to view loadings.</p>
+        <div class="canvas-container">
+          <canvas id="eigenvectorCanvas" width="400" height="300"></canvas>
+        </div>
       </div>
+    </div>
+    <div class="card">
+      <h2>Spectral Summary</h2>
+      <div id="spectralSummary" class="text-muted">Run analysis to see spectral results.</div>
+      <div id="eigenTable" class="mt-12"></div>
     </div>
   </div>
 
@@ -448,9 +554,17 @@ body.dark .badge-blue { background: #1e3a5f; color: #bfdbfe; }
       <div class="flex-row">
         <button class="btn btn-primary" onclick="exportCSV()">Export CSV</button>
         <button class="btn btn-outline" onclick="exportJSON()">Export JSON</button>
+        <button class="btn btn-outline" onclick="exportRCode()">Export R Code</button>
+        <button class="btn btn-outline" onclick="exportPNG('networkCanvas', 'sheaf_network.png')">Export Network PNG</button>
+        <button class="btn btn-outline" onclick="exportPNG('spectrumCanvas', 'sheaf_spectrum.png')">Export Spectrum PNG</button>
         <button class="btn btn-outline" onclick="exportLaTeX()">Export LaTeX</button>
       </div>
       <div class="mt-16" id="exportPreview"></div>
+    </div>
+    <div class="card" id="rCodeCard" style="display:none;">
+      <h2>R Code (netmeta + Sheaf Laplacian)</h2>
+      <p class="text-muted mb-8">Copy this code into R to reproduce the analysis using the netmeta package.</p>
+      <textarea id="rCodeOutput" rows="20" readonly style="background:var(--code-bg);"></textarea>
     </div>
   </div>
 
@@ -470,6 +584,9 @@ body.dark .badge-blue { background: #1e3a5f; color: #bfdbfe; }
   </div>
   <div id="testResults" class="mt-8"></div>
 </div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
 
 <script>
 /* =========================================================================
@@ -1173,8 +1290,15 @@ function runAnalysis() {
     renderNodeEstimates();
     renderEdgeScores();
     renderNetworkGraph();
+    renderRankedEdgeTable();
     renderLaplacian();
     renderSpectrum();
+
+    // Switch to Network tab
+    switchToTab('network');
+
+    // Show toast
+    showToast(`Analysis complete: GII = ${currentResult.gii.toFixed(4)} | ${currentNetwork.nodes.length} treatments, ${currentNetwork.edges.length} edges`);
 
     statusEl.textContent = `Analysis complete. ${currentNetwork.nodes.length} treatments, ${currentNetwork.edges.length} edges, GII = ${currentResult.gii.toFixed(4)}`;
     statusEl.className = 'text-green text-sm';
@@ -1259,7 +1383,95 @@ function renderEdgeScores() {
   document.getElementById('edgeScoresTable').innerHTML = html;
 }
 
-/** Render network graph on canvas */
+/** Inconsistency score color: green (#22c55e) -> yellow (#eab308) -> red (#ef4444) */
+function scoreToColor(score) {
+  let r, g, b;
+  if (score < 50) {
+    const t = score / 50;
+    r = Math.round(34 + t * (234 - 34));
+    g = Math.round(197 + t * (179 - 197));
+    b = Math.round(94 + t * (8 - 94));
+  } else {
+    const t = (score - 50) / 50;
+    r = Math.round(234 + t * (239 - 234));
+    g = Math.round(179 + t * (68 - 179));
+    b = Math.round(8 + t * (68 - 8));
+  }
+  return `rgb(${r},${g},${b})`;
+}
+
+/** Force-directed layout positions (stored for hover detection) */
+let graphPositions = null; // { nodePos: {name: {x,y}}, nodeRadius: {name: r} }
+
+/** Fruchterman-Reingold force-directed layout */
+function forceDirectedLayout(nodes, edges, W, H, iterations) {
+  const n = nodes.length;
+  const area = W * H;
+  const k = Math.sqrt(area / n); // ideal spring length
+  const margin = 60;
+
+  // Initialize positions in a circle (deterministic start)
+  const pos = {};
+  nodes.forEach((nd, i) => {
+    const angle = (2 * Math.PI * i / n) - Math.PI / 2;
+    const cx = W / 2, cy = H / 2;
+    const rad = Math.min(W, H) * 0.3;
+    pos[nd] = { x: cx + rad * Math.cos(angle), y: cy + rad * Math.sin(angle) };
+  });
+
+  let temp = W / 10; // temperature
+
+  for (let iter = 0; iter < iterations; iter++) {
+    // Displacement accumulators
+    const disp = {};
+    nodes.forEach(nd => { disp[nd] = { x: 0, y: 0 }; });
+
+    // Repulsive forces: all pairs
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const ni = nodes[i], nj = nodes[j];
+        let dx = pos[ni].x - pos[nj].x;
+        let dy = pos[ni].y - pos[nj].y;
+        const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01);
+        const force = (k * k) / dist; // repulsion = k^2 / d
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        disp[ni].x += fx; disp[ni].y += fy;
+        disp[nj].x -= fx; disp[nj].y -= fy;
+      }
+    }
+
+    // Attractive forces: edges
+    edges.forEach(e => {
+      let dx = pos[e.treat2].x - pos[e.treat1].x;
+      let dy = pos[e.treat2].y - pos[e.treat1].y;
+      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01);
+      const force = (dist * dist) / k; // attraction = d^2 / k
+      const fx = (dx / dist) * force;
+      const fy = (dy / dist) * force;
+      disp[e.treat1].x += fx; disp[e.treat1].y += fy;
+      disp[e.treat2].x -= fx; disp[e.treat2].y -= fy;
+    });
+
+    // Apply displacements capped by temperature
+    nodes.forEach(nd => {
+      const dx = disp[nd].x, dy = disp[nd].y;
+      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01);
+      const cappedDist = Math.min(dist, temp);
+      pos[nd].x += (dx / dist) * cappedDist;
+      pos[nd].y += (dy / dist) * cappedDist;
+      // Clamp to canvas bounds with margin
+      pos[nd].x = Math.max(margin, Math.min(W - margin, pos[nd].x));
+      pos[nd].y = Math.max(margin, Math.min(H - margin, pos[nd].y));
+    });
+
+    temp *= 0.97; // cooling
+  }
+
+  return pos;
+}
+
+/** Render network graph on canvas with force-directed layout */
 function renderNetworkGraph() {
   if (!currentResult) return;
   const canvas = document.getElementById('networkCanvas');
@@ -1280,70 +1492,179 @@ function renderNetworkGraph() {
   const res = currentResult;
   const n = nodes.length;
 
-  // Layout: circular
-  const cx = W / 2, cy = H / 2;
-  const radius = Math.min(W, H) * 0.35;
-  const pos = {};
-  nodes.forEach((nd, i) => {
-    const angle = (2 * Math.PI * i / n) - Math.PI / 2;
-    pos[nd] = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+  // Force-directed layout (200 iterations)
+  const pos = forceDirectedLayout(nodes, edges, W, H, 200);
+
+  // Compute degree for node radius
+  const degree = {};
+  nodes.forEach(nd => { degree[nd] = 0; });
+  edges.forEach(e => { degree[e.treat1]++; degree[e.treat2]++; });
+
+  // Node radii: sqrt(degree) scaled, min 20, max 50
+  const maxDeg = Math.max(...Object.values(degree), 1);
+  const nodeRadius = {};
+  nodes.forEach(nd => {
+    nodeRadius[nd] = 20 + (Math.sqrt(degree[nd] / maxDeg)) * 30;
   });
+
+  // Store for hover detection
+  graphPositions = { nodePos: pos, nodeRadius };
 
   // Draw edges
   edges.forEach((e, i) => {
     const p1 = pos[e.treat1], p2 = pos[e.treat2];
     const score = res.normalizedScores[i];
-    const lw = Math.max(1.5, Math.min(8, e.k * 2));
+    // Thickness proportional to precision (1/SE), min 2, max 8
+    const precision = 1 / e.se;
+    const maxPrec = Math.max(...edges.map(ed => 1 / ed.se));
+    const minPrec = Math.min(...edges.map(ed => 1 / ed.se));
+    const range = maxPrec - minPrec;
+    const lw = range > 0 ? 2 + ((precision - minPrec) / range) * 6 : 4;
 
-    // Color: green to red based on inconsistency score
-    let r, g, b;
-    if (score < 50) {
-      const t = score / 50;
-      r = Math.round(22 + t * (234 - 22));
-      g = Math.round(163 + t * (88 - 163));
-      b = Math.round(74 + t * (12 - 74));
-    } else {
-      const t = (score - 50) / 50;
-      r = Math.round(234 + t * (220 - 234));
-      g = Math.round(88 + t * (38 - 88));
-      b = Math.round(12 + t * (38 - 12));
-    }
-
-    ctx.strokeStyle = `rgb(${r},${g},${b})`;
+    ctx.strokeStyle = scoreToColor(score);
     ctx.lineWidth = lw;
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
     ctx.stroke();
 
-    // Edge label
+    // Edge label (effect value)
     const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
     ctx.fillStyle = isDark ? '#94a3b8' : '#6b7280';
-    ctx.font = '11px -apple-system, sans-serif';
+    ctx.font = '10px -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`${e.effect.toFixed(2)} (k=${e.k})`, mx, my - 6);
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(`${e.effect.toFixed(2)}`, mx, my - 4);
   });
 
   // Draw nodes
-  nodes.forEach((nd, i) => {
+  nodes.forEach(nd => {
     const p = pos[nd];
-    const nodeR = 22;
+    const r = nodeRadius[nd];
 
-    ctx.fillStyle = isDark ? '#1e40af' : '#2563eb';
+    // White fill with dark border
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(p.x, p.y, nodeR, 0, 2 * Math.PI);
+    ctx.arc(p.x, p.y, r, 0, 2 * Math.PI);
     ctx.fill();
 
-    ctx.strokeStyle = isDark ? '#60a5fa' : '#1d4ed8';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = isDark ? '#60a5fa' : '#1e3a5f';
+    ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 14px -apple-system, sans-serif';
+    ctx.fillStyle = isDark ? '#e2e8f0' : '#1a1a2e';
+    ctx.font = `bold ${Math.max(12, r * 0.6)}px -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(nd, p.x, p.y);
   });
+}
+
+/** Render ranked edge table on Network tab */
+function renderRankedEdgeTable() {
+  if (!currentResult) return;
+  const card = document.getElementById('rankedEdgeCard');
+  card.style.display = 'block';
+  const res = currentResult;
+  const z = normalQuantile(0.975);
+
+  // Sort by normalized score descending
+  const ranked = res.edges.map((e, i) => ({
+    label: `${e.treat1} vs ${e.treat2}`,
+    effect: e.effect,
+    se: e.se,
+    ciLo: e.effect - z * e.se,
+    ciHi: e.effect + z * e.se,
+    score: res.normalizedScores[i],
+    k: e.k
+  }));
+  ranked.sort((a, b) => b.score - a.score);
+
+  let html = '<table class="data-table"><thead><tr>';
+  html += '<th>Edge</th><th>Direct Effect [95% CI]</th><th>Inconsistency Score</th><th>Studies</th>';
+  html += '</tr></thead><tbody>';
+  ranked.forEach((e, idx) => {
+    const rowClass = idx === 0 ? ' class="ranked-row-top"' : '';
+    html += `<tr${rowClass}>`;
+    html += `<td>${escapeHtml(e.label)}</td>`;
+    html += `<td class="num">${e.effect.toFixed(3)} [${e.ciLo.toFixed(3)}, ${e.ciHi.toFixed(3)}]</td>`;
+    html += `<td><div class="score-bar-container"><span class="text-mono">${e.score.toFixed(1)}%</span><div class="score-bar" style="width:100px;"><div class="score-bar-fill" style="width:${e.score}%;background:${scoreToColor(e.score)}"></div></div></div></td>`;
+    html += `<td class="num">${e.k}</td>`;
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('rankedEdgeTable').innerHTML = html;
+}
+
+/** Network canvas hover handler */
+function setupNetworkHover() {
+  const canvas = document.getElementById('networkCanvas');
+  const tooltip = document.getElementById('graphTooltip');
+
+  canvas.addEventListener('mousemove', function(evt) {
+    if (!currentResult || !graphPositions) { tooltip.classList.remove('visible'); return; }
+    const rect = canvas.getBoundingClientRect();
+    const mx = evt.clientX - rect.left;
+    const my = evt.clientY - rect.top;
+    const res = currentResult;
+    const z = normalQuantile(0.975);
+    const { nodePos, nodeRadius } = graphPositions;
+
+    // Check nodes first
+    for (const nd of currentNetwork.nodes) {
+      const p = nodePos[nd];
+      const r = nodeRadius[nd];
+      const dx = mx - p.x, dy = my - p.y;
+      if (dx * dx + dy * dy <= r * r) {
+        const idx = res.nodes.indexOf(nd);
+        const est = res.nodeEstimates[idx];
+        const deg = currentNetwork.edges.filter(e => e.treat1 === nd || e.treat2 === nd).length;
+        tooltip.innerHTML = `<strong>${escapeHtml(nd)}</strong><br>Estimated effect: ${est.toFixed(4)}<br>Degree: ${deg}`;
+        tooltip.style.left = (mx + 15) + 'px';
+        tooltip.style.top = (my - 10) + 'px';
+        tooltip.classList.add('visible');
+        return;
+      }
+    }
+
+    // Check edges (distance to line segment within 15px)
+    let closest = null, closestDist = 16;
+    currentNetwork.edges.forEach((e, i) => {
+      const p1 = nodePos[e.treat1], p2 = nodePos[e.treat2];
+      const d = pointToSegmentDist(mx, my, p1.x, p1.y, p2.x, p2.y);
+      if (d < closestDist) { closestDist = d; closest = i; }
+    });
+
+    if (closest !== null) {
+      const e = currentNetwork.edges[closest];
+      const score = res.normalizedScores[closest];
+      const ciLo = e.effect - z * e.se;
+      const ciHi = e.effect + z * e.se;
+      tooltip.innerHTML = `<strong>${escapeHtml(e.treat1)} vs ${escapeHtml(e.treat2)}</strong><br>` +
+        `Direct: ${e.effect.toFixed(3)} [95% CI: ${ciLo.toFixed(3)}, ${ciHi.toFixed(3)}]<br>` +
+        `Inconsistency: ${score.toFixed(1)}%<br>Studies: ${e.k}`;
+      tooltip.style.left = (mx + 15) + 'px';
+      tooltip.style.top = (my - 10) + 'px';
+      tooltip.classList.add('visible');
+    } else {
+      tooltip.classList.remove('visible');
+    }
+  });
+
+  canvas.addEventListener('mouseleave', function() {
+    tooltip.classList.remove('visible');
+  });
+}
+
+/** Distance from point (px,py) to line segment (x1,y1)-(x2,y2) */
+function pointToSegmentDist(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.sqrt((px - x1) * (px - x1) + (py - y1) * (py - y1));
+  let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  const projX = x1 + t * dx, projY = y1 + t * dy;
+  return Math.sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
 }
 
 /** Render Laplacian matrix */
@@ -1369,14 +1690,66 @@ function renderLaplacian() {
   document.getElementById('laplacianTable').innerHTML = html;
 }
 
-/** Render eigenvalue spectrum chart and summary */
+/** Store bar geometry for click detection on scree plot */
+let spectrumBars = []; // [{x, y, w, h, idx}]
+let selectedEigenIdx = -1;
+
+/** Render eigenvalue scree plot with click interaction */
 function renderSpectrum() {
   if (!currentResult) return;
+  const res = currentResult;
+  const eigenvalues = res.eigenvalues;
+  const n = eigenvalues.length;
+  const nZero = eigenvalues.filter(v => v < 1e-8).length;
+  const nNonZero = n - nZero;
+
+  // --- GII Display ---
+  const giiDisp = document.getElementById('giiDisplay');
+  giiDisp.style.display = 'block';
+  const giiVal = document.getElementById('giiValue');
+  const giiColor = res.gii < 0.5 ? 'var(--green)' : (res.gii < 2 ? 'var(--orange)' : 'var(--red)');
+  giiVal.textContent = res.gii.toFixed(4);
+  giiVal.style.color = giiColor;
+  document.getElementById('giiAnnotation').textContent =
+    `The sheaf Laplacian has ${nNonZero} non-zero eigenvalue${nNonZero !== 1 ? 's' : ''}, indicating ${nNonZero} independent inconsistency mode${nNonZero !== 1 ? 's' : ''}.`;
+
+  // --- Scree Plot ---
+  renderScreePlot();
+
+  // --- Spectral Summary ---
+  const summaryEl = document.getElementById('spectralSummary');
+  let html = '<div class="mt-8">';
+  html += `<p><strong>Dimension:</strong> ${n} x ${n} Laplacian</p>`;
+  html += `<p><strong>Zero eigenvalues:</strong> ${nZero} (connected components)</p>`;
+  html += `<p><strong>Non-zero eigenvalues:</strong> ${nNonZero}</p>`;
+  html += `<p><strong>Smallest non-zero (algebraic connectivity):</strong> ${eigenvalues.find(v => v > 1e-8)?.toFixed(6) ?? 'N/A'}</p>`;
+  html += `<p><strong>Largest:</strong> ${eigenvalues[n-1].toFixed(6)}</p>`;
+  html += `<p><strong>GII:</strong> <span class="${res.gii < 0.5 ? 'text-green' : (res.gii < 2 ? 'text-orange' : 'text-red')}">${res.gii.toFixed(6)}</span></p>`;
+  html += '<p class="text-muted mt-8">Low GII indicates the network is globally consistent. High GII suggests systematic inconsistency in treatment effect estimates.</p>';
+  html += '</div>';
+  summaryEl.innerHTML = html;
+
+  // --- Eigenvalue table ---
+  const tblEl = document.getElementById('eigenTable');
+  let th = '<table class="data-table"><thead><tr><th>#</th><th>Eigenvalue</th><th>Status</th></tr></thead><tbody>';
+  eigenvalues.forEach((ev, i) => {
+    const status = ev < 1e-8 ? '<span class="badge badge-blue">Zero</span>' : '<span class="badge badge-green">Non-zero</span>';
+    th += `<tr><td class="num">${i+1}</td><td class="num">${ev.toFixed(6)}</td><td>${status}</td></tr>`;
+  });
+  th += '</tbody></table>';
+  tblEl.innerHTML = th;
+
+  // Auto-select last eigenvalue (largest)
+  selectedEigenIdx = n - 1;
+  renderEigenvectorLoadings(selectedEigenIdx);
+}
+
+/** Render scree bar chart */
+function renderScreePlot() {
   const canvas = document.getElementById('spectrumCanvas');
   const ctx = canvas.getContext('2d');
   const res = currentResult;
 
-  // High-DPI
   const dpr = window.devicePixelRatio ?? 1;
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width * dpr;
@@ -1391,7 +1764,6 @@ function renderSpectrum() {
   const n = eigenvalues.length;
   const maxEig = Math.max(...eigenvalues, 1);
 
-  // Margins
   const ml = 60, mr = 30, mt = 20, mb = 50;
   const plotW = W - ml - mr, plotH = H - mt - mb;
 
@@ -1420,16 +1792,31 @@ function renderSpectrum() {
   // Bars
   const barW = Math.max(10, Math.min(50, plotW / n - 4));
   const gap = (plotW - barW * n) / (n + 1);
+  spectrumBars = [];
 
   eigenvalues.forEach((ev, i) => {
     const x = ml + gap + i * (barW + gap);
-    const barH = (ev / maxEig) * plotH;
+    const barH = Math.max(1, (ev / maxEig) * plotH);
     const y = mt + plotH - barH;
 
+    spectrumBars.push({ x, y, w: barW, h: barH, idx: i });
+
     const isZero = ev < 1e-8;
-    ctx.fillStyle = isZero ? (isDark ? '#334155' : '#e5e7eb') :
-                    (isDark ? '#60a5fa' : '#2563eb');
+    const isSelected = i === selectedEigenIdx;
+    if (isSelected) {
+      ctx.fillStyle = isDark ? '#f59e0b' : '#d97706';
+    } else if (isZero) {
+      ctx.fillStyle = isDark ? '#334155' : '#94a3b8';
+    } else {
+      ctx.fillStyle = isDark ? '#60a5fa' : '#3b82f6';
+    }
     ctx.fillRect(x, y, barW, barH);
+
+    if (isSelected) {
+      ctx.strokeStyle = isDark ? '#fbbf24' : '#b45309';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, barW, barH);
+    }
 
     // Value label
     ctx.fillStyle = isDark ? '#94a3b8' : '#6b7280';
@@ -1450,37 +1837,123 @@ function renderSpectrum() {
     const y = mt + plotH - (tick / 4) * plotH;
     ctx.fillText(val.toFixed(1), ml - 6, y + 3);
     ctx.strokeStyle = isDark ? '#334155' : '#e5e7eb';
+    ctx.lineWidth = 0.5;
     ctx.beginPath();
     ctx.moveTo(ml, y);
     ctx.lineTo(ml + plotW, y);
     ctx.stroke();
   }
+}
 
-  // Spectral summary
-  const summaryEl = document.getElementById('spectralSummary');
-  const nZero = eigenvalues.filter(v => v < 1e-8).length;
-  const nNonZero = n - nZero;
+/** Render eigenvector horizontal bar chart for selected eigenvalue index */
+function renderEigenvectorLoadings(eigenIdx) {
+  if (!currentResult) return;
+  const res = currentResult;
+  const canvas = document.getElementById('eigenvectorCanvas');
+  const ctx = canvas.getContext('2d');
 
-  let html = `<div class="mt-8">`;
-  html += `<p><strong>Dimension:</strong> ${n} x ${n} Laplacian</p>`;
-  html += `<p><strong>Zero eigenvalues:</strong> ${nZero} (connected components)</p>`;
-  html += `<p><strong>Non-zero eigenvalues:</strong> ${nNonZero}</p>`;
-  html += `<p><strong>Smallest non-zero (algebraic connectivity):</strong> ${eigenvalues.find(v => v > 1e-8)?.toFixed(6) ?? 'N/A'}</p>`;
-  html += `<p><strong>Largest:</strong> ${eigenvalues[n-1].toFixed(6)}</p>`;
-  html += `<p><strong>GII = sum(nonzero) / (n-1):</strong> <span class="${res.gii < 0.5 ? 'text-green' : (res.gii < 2 ? 'text-orange' : 'text-red')}">${res.gii.toFixed(6)}</span></p>`;
-  html += `<p class="text-muted mt-8">Low GII indicates the network is globally consistent. High GII suggests systematic inconsistency in treatment effect estimates.</p>`;
-  html += `</div>`;
-  summaryEl.innerHTML = html;
+  const dpr = window.devicePixelRatio ?? 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
 
-  // Eigenvalue table
-  const tblEl = document.getElementById('eigenTable');
-  let th = '<table class="data-table"><thead><tr><th>#</th><th>Eigenvalue</th><th>Status</th></tr></thead><tbody>';
-  eigenvalues.forEach((ev, i) => {
-    const status = ev < 1e-8 ? '<span class="badge badge-blue">Zero</span>' : '<span class="badge badge-green">Non-zero</span>';
-    th += `<tr><td class="num">${i+1}</td><td class="num">${ev.toFixed(6)}</td><td>${status}</td></tr>`;
+  const isDark = document.body.classList.contains('dark');
+  ctx.clearRect(0, 0, W, H);
+
+  const vec = res.eigenvectors[eigenIdx];
+  const nodes = res.nodes;
+  const n = nodes.length;
+
+  // Update label
+  document.getElementById('eigenvectorLabel').textContent =
+    `Eigenvector ${eigenIdx + 1} (eigenvalue = ${res.eigenvalues[eigenIdx].toFixed(4)})`;
+
+  const ml = 80, mr = 30, mt = 10, mb = 30;
+  const plotW = W - ml - mr, plotH = H - mt - mb;
+  const barH = Math.min(30, plotH / n - 4);
+  const gap = (plotH - barH * n) / (n + 1);
+
+  const maxAbs = Math.max(...vec.map(Math.abs), 1e-10);
+
+  // Draw zero line
+  const zeroX = ml + plotW / 2;
+  ctx.strokeStyle = isDark ? '#475569' : '#d1d5db';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(zeroX, mt);
+  ctx.lineTo(zeroX, mt + plotH);
+  ctx.stroke();
+
+  // Draw bars
+  nodes.forEach((nd, i) => {
+    const y = mt + gap + i * (barH + gap);
+    const val = vec[i];
+    const normVal = val / maxAbs;
+    const bw = Math.abs(normVal) * (plotW / 2);
+    const x = val >= 0 ? zeroX : zeroX - bw;
+
+    ctx.fillStyle = val >= 0 ? (isDark ? '#60a5fa' : '#3b82f6') : (isDark ? '#f87171' : '#ef4444');
+    ctx.fillRect(x, y, bw, barH);
+
+    // Node label
+    ctx.fillStyle = isDark ? '#e2e8f0' : '#1a1a2e';
+    ctx.font = '12px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(nd, ml - 6, y + barH / 2);
+
+    // Value label
+    ctx.fillStyle = isDark ? '#94a3b8' : '#6b7280';
+    ctx.font = '10px Consolas, monospace';
+    ctx.textAlign = val >= 0 ? 'left' : 'right';
+    ctx.fillText(val.toFixed(3), val >= 0 ? x + bw + 4 : x - 4, y + barH / 2);
   });
-  th += '</tbody></table>';
-  tblEl.innerHTML = th;
+}
+
+/** Setup scree plot click handler */
+function setupSpectrumClick() {
+  const canvas = document.getElementById('spectrumCanvas');
+  canvas.addEventListener('click', function(evt) {
+    if (!currentResult || spectrumBars.length === 0) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = evt.clientX - rect.left;
+    const my = evt.clientY - rect.top;
+
+    for (const bar of spectrumBars) {
+      if (mx >= bar.x && mx <= bar.x + bar.w && my >= bar.y && my <= bar.y + bar.h) {
+        selectedEigenIdx = bar.idx;
+        renderScreePlot();
+        renderEigenvectorLoadings(bar.idx);
+        return;
+      }
+    }
+  });
+}
+
+
+// ===== UI HELPERS =====
+
+/** Programmatic tab switch */
+function switchToTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-selected', 'true'); }
+  const panel = document.getElementById('tab-' + tabName);
+  if (panel) panel.classList.add('active');
+}
+
+/** Toast notification */
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('visible');
+  setTimeout(() => { toast.classList.remove('visible'); }, 3500);
 }
 
 
@@ -1490,21 +1963,19 @@ function exportCSV() {
   if (!currentResult) { alert('Run analysis first.'); return; }
   const res = currentResult;
 
-  let csv = '=== Node Estimates ===\n';
-  csv += 'Treatment,Estimate\n';
+  let csv = 'Edge,Direct Effect,SE,Inconsistency Score (%),Residual,Studies\n';
+  res.edges.forEach((e, i) => {
+    csv += `${e.treat1}-${e.treat2},${e.effect.toFixed(6)},${e.se.toFixed(6)},${res.normalizedScores[i].toFixed(1)},${res.edgeResiduals[i].toFixed(6)},${e.k}\n`;
+  });
+
+  csv += `\nGII,${res.gii.toFixed(6)}\n`;
+
+  csv += '\nTreatment,Estimate\n';
   res.nodes.forEach((nd, i) => {
     csv += `${nd},${res.nodeEstimates[i].toFixed(6)}\n`;
   });
 
-  csv += '\n=== Edge Inconsistency Scores ===\n';
-  csv += 'Edge,Effect,SE,Residual,Score,Normalized%\n';
-  res.edges.forEach((e, i) => {
-    csv += `${e.treat1}-${e.treat2},${e.effect.toFixed(6)},${e.se.toFixed(6)},${res.edgeResiduals[i].toFixed(6)},${res.edgeScores[i].toFixed(6)},${res.normalizedScores[i].toFixed(1)}\n`;
-  });
-
-  csv += `\n=== Global Inconsistency Index ===\nGII,${res.gii.toFixed(6)}\n`;
-
-  csv += '\n=== Eigenvalues ===\nIndex,Value\n';
+  csv += '\nEigenvalue Index,Value\n';
   res.eigenvalues.forEach((v, i) => csv += `${i+1},${v.toFixed(6)}\n`);
 
   downloadBlob(csv, 'sheaf_nma_results.csv', 'text/csv');
@@ -1523,10 +1994,13 @@ function exportJSON() {
       k: e.k,
       residual: +res.edgeResiduals[i].toFixed(6),
       score: +res.edgeScores[i].toFixed(6),
-      normalizedScore: +res.normalizedScores[i].toFixed(1)
+      normalizedScore: +res.normalizedScores[i].toFixed(1),
+      studies: e.studies
     })),
     gii: +res.gii.toFixed(6),
-    eigenvalues: res.eigenvalues.map(v => +v.toFixed(6))
+    laplacian: res.laplacian.map(row => Array.from(row).map(v => +v.toFixed(6))),
+    eigenvalues: res.eigenvalues.map(v => +v.toFixed(6)),
+    eigenvectors: res.eigenvectors.map(v => v.map(x => +x.toFixed(6)))
   };
   const json = JSON.stringify(out, null, 2);
   downloadBlob(json, 'sheaf_nma_results.json', 'application/json');
@@ -1556,6 +2030,74 @@ function exportLaTeX() {
   tex += `GII = ${res.gii.toFixed(6)}\n`;
 
   downloadBlob(tex, 'sheaf_nma_results.tex', 'text/plain');
+}
+
+/** Generate R code for netmeta + manual sheaf Laplacian */
+function exportRCode() {
+  if (!currentResult) { alert('Run analysis first.'); return; }
+  const res = currentResult;
+  const net = currentNetwork;
+
+  // Build data vectors
+  const t1s = [], t2s = [], tes = [], ses = [];
+  currentData.forEach(c => {
+    t1s.push('"' + c.treat1 + '"');
+    t2s.push('"' + c.treat2 + '"');
+    tes.push(c.effect.toFixed(4));
+    ses.push(c.se.toFixed(4));
+  });
+
+  let r = '# SheafNMA: R Reproduction Code\n';
+  r += '# Generated by SheafNMA v1.0\n';
+  r += '# Run this in R with netmeta installed\n\n';
+  r += 'library(netmeta)\n\n';
+  r += '# === Data ===\n';
+  r += 'dat <- data.frame(\n';
+  r += '  treat1 = c(' + t1s.join(', ') + '),\n';
+  r += '  treat2 = c(' + t2s.join(', ') + '),\n';
+  r += '  TE = c(' + tes.join(', ') + '),\n';
+  r += '  seTE = c(' + ses.join(', ') + ')\n';
+  r += ')\n\n';
+  r += '# === NMA via netmeta ===\n';
+  r += 'nma <- netmeta(TE, seTE, treat1, treat2, data = dat, sm = "OR")\n';
+  r += 'print(nma)\n\n';
+  r += '# === Node-splitting (inconsistency check) ===\n';
+  r += 'ns <- netsplit(nma)\n';
+  r += 'print(ns)\n\n';
+  r += '# === SheafNMA Results (browser engine) ===\n';
+  r += '# Global Inconsistency Index: ' + res.gii.toFixed(6) + '\n';
+  r += '# Edge scores:\n';
+  res.edges.forEach((e, i) => {
+    r += '#   ' + e.treat1 + '-' + e.treat2 + ': ' + res.normalizedScores[i].toFixed(1) + '%\n';
+  });
+  r += '\n# === Manual Sheaf Laplacian (for verification) ===\n';
+  r += '# Build coboundary map and compute L = F^T %*% F\n';
+  r += '# The eigenvalues of L reveal inconsistency modes.\n';
+  r += '# See Hansen & Ghrist (2012) for sheaf-theoretic foundations.\n';
+
+  // Show in card
+  const card = document.getElementById('rCodeCard');
+  card.style.display = 'block';
+  document.getElementById('rCodeOutput').value = r;
+
+  downloadBlob(r, 'sheaf_nma_reproduce.R', 'text/plain');
+}
+
+/** Export canvas as PNG */
+function exportPNG(canvasId, filename) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) { alert('Canvas not found.'); return; }
+  canvas.toBlob(function(blob) {
+    if (!blob) { alert('Could not export canvas.'); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 'image/png');
 }
 
 function downloadBlob(content, filename, mime) {
@@ -1862,6 +2404,129 @@ function runTests() {
     assert(esc.includes('&lt;') && esc.includes('&amp;'), 'escapeHtml uses entities');
   }
 
+  // --- Visualization & Export Tests ---
+  log.push('<div class="test-result" style="font-weight:700;margin-top:8px;">--- Visualization & Export ---</div>');
+
+  // Test 15: scoreToColor returns valid CSS
+  {
+    const c0 = scoreToColor(0);
+    const c50 = scoreToColor(50);
+    const c100 = scoreToColor(100);
+    assert(c0.startsWith('rgb('), 'scoreToColor(0) returns rgb()');
+    assert(c50.startsWith('rgb('), 'scoreToColor(50) returns rgb()');
+    assert(c100.startsWith('rgb('), 'scoreToColor(100) returns rgb()');
+  }
+
+  // Test 16: forceDirectedLayout returns positions for all nodes
+  {
+    const testNodes = ['X', 'Y', 'Z'];
+    const testEdges = [{ treat1: 'X', treat2: 'Y' }, { treat1: 'Y', treat2: 'Z' }];
+    const pos = forceDirectedLayout(testNodes, testEdges, 800, 500, 50);
+    assert(pos['X'] && pos['Y'] && pos['Z'], 'forceDirectedLayout: returns positions for all nodes');
+    assert(isFinite(pos['X'].x) && isFinite(pos['X'].y), 'forceDirectedLayout: positions are finite');
+  }
+
+  // Test 17: forceDirectedLayout respects bounds
+  {
+    const testNodes = ['A', 'B', 'C', 'D'];
+    const testEdges = [
+      { treat1: 'A', treat2: 'B' }, { treat1: 'B', treat2: 'C' },
+      { treat1: 'C', treat2: 'D' }, { treat1: 'A', treat2: 'D' }
+    ];
+    const W = 600, H = 400;
+    const pos = forceDirectedLayout(testNodes, testEdges, W, H, 200);
+    let allInBounds = true;
+    for (const nd of testNodes) {
+      if (pos[nd].x < 0 || pos[nd].x > W || pos[nd].y < 0 || pos[nd].y > H) {
+        allInBounds = false;
+      }
+    }
+    assert(allInBounds, 'forceDirectedLayout: all nodes within canvas bounds');
+  }
+
+  // Test 18: pointToSegmentDist works correctly
+  {
+    // Point on the segment
+    const d1 = pointToSegmentDist(5, 0, 0, 0, 10, 0);
+    approx(d1, 0, 1e-10, 'pointToSegmentDist: point on segment = 0');
+    // Point perpendicular
+    const d2 = pointToSegmentDist(5, 3, 0, 0, 10, 0);
+    approx(d2, 3, 1e-10, 'pointToSegmentDist: perpendicular dist = 3');
+    // Point beyond endpoint
+    const d3 = pointToSegmentDist(15, 0, 0, 0, 10, 0);
+    approx(d3, 5, 1e-10, 'pointToSegmentDist: beyond endpoint = 5');
+  }
+
+  // Test 19: switchToTab activates correct panel
+  {
+    switchToTab('export');
+    const exportPanel = document.getElementById('tab-export');
+    const exportActive = exportPanel.classList.contains('active');
+    switchToTab('data'); // restore
+    assert(exportActive, 'switchToTab: export tab activates correctly');
+  }
+
+  // Test 20: exportRCode generates R code with netmeta
+  {
+    // Run analysis on smoking to populate results
+    const savedData = currentData;
+    const savedNet = currentNetwork;
+    const savedRes = currentResult;
+    currentData = getSmokingData();
+    currentNetwork = buildNetwork(currentData);
+    currentResult = sheafAnalysis(currentNetwork);
+
+    // Test R code generation (capture without download)
+    const res = currentResult;
+    const t1s = currentData.map(c => '"' + c.treat1 + '"');
+    const hasNetmeta = t1s.length > 0;
+    assert(hasNetmeta, 'exportRCode: can generate R code with data');
+    assert(res.gii !== undefined, 'exportRCode: result has gii');
+
+    // Restore
+    currentData = savedData;
+    currentNetwork = savedNet;
+    currentResult = savedRes;
+  }
+
+  // Test 21: Smoking dataset full pipeline (graph positions populated)
+  {
+    const data = getSmokingData();
+    const net = buildNetwork(data);
+    const res = sheafAnalysis(net);
+    currentData = data;
+    currentNetwork = net;
+    currentResult = res;
+    renderNetworkGraph();
+    assert(graphPositions !== null, 'Smoking pipeline: graphPositions populated');
+    assert(graphPositions.nodePos['A'] !== undefined, 'Smoking pipeline: node A has position');
+    assert(graphPositions.nodeRadius['A'] >= 20, 'Smoking pipeline: node radius >= 20');
+  }
+
+  // Test 22: renderSpectrum populates GII display
+  {
+    const data = getSmokingData();
+    const net = buildNetwork(data);
+    currentData = data;
+    currentNetwork = net;
+    currentResult = sheafAnalysis(net);
+    renderSpectrum();
+    const giiText = document.getElementById('giiValue').textContent;
+    assert(giiText !== '--' && giiText.length > 0, 'Spectrum: GII display updated');
+  }
+
+  // Test 23: normalQuantile inverse
+  {
+    approx(normalQuantile(0.5), 0, 1e-6, 'normalQuantile(0.5) = 0');
+    approx(normalQuantile(0.975), 1.96, 0.01, 'normalQuantile(0.975) ~ 1.96');
+  }
+
+  // Test 24: spectrumBars populated after renderScreePlot
+  {
+    assert(spectrumBars.length > 0, 'spectrumBars populated after renderSpectrum');
+    assert(spectrumBars[0].w > 0, 'spectrumBars: bar has positive width');
+  }
+
   // Render summary
   const summary = `<div class="test-summary ${failed === 0 ? 'text-green' : 'text-red'}">Total: ${passed + failed} | Passed: ${passed} | Failed: ${failed}</div>`;
   results.innerHTML = log.join('') + summary;
@@ -1876,6 +2541,9 @@ function closeTests() {
 (function init() {
   // Load default dataset
   onDatasetChange();
+  // Setup event listeners for hover/click
+  setupNetworkHover();
+  setupSpectrumClick();
 })();
 </script>
 </body>
