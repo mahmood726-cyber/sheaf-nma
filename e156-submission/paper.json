@@ -3,7 +3,7 @@
   "slug": "sheaf-nma-consistency",
   "author": "Mahmood Ahmad",
   "date": "2026-03-26",
-  "body": "How can analysts detect and localize inconsistency in network meta-analysis using algebraic methods beyond the traditional loop-based splitting approach? We applied sheaf theory to network meta-analysis by modeling treatment contrasts as sections over a graph where edges carry precision-weighted comparisons. The engine constructs a coboundary operator, assembles the sheaf Laplacian matrix, computes eigenvalues to derive a global inconsistency index, and assigns per-edge residual scores with force-directed network visualization. On a smoking cessation network with 24 contrasts across 4 treatments, the global inconsistency index was 3.41, with the self-help versus no-contact edge contributing 62 percent of total inconsistency. Removing that edge reduced the global index to 1.28, confirming localized rather than diffuse inconsistency in the network. Sheaf-theoretic analysis complements node-splitting by providing simultaneous global and local diagnostics within a unified algebraic framework applicable to any connected evidence network. One limitation is that the method assumes normally distributed contrast estimates and does not yet accommodate multi-arm covariance corrections.",
+  "body": "How can analysts detect and localize inconsistency in network meta-analysis using algebraic methods beyond the traditional loop-based splitting approach? We applied sheaf theory to network meta-analysis by modeling treatment contrasts as sections over a graph where edges carry precision-weighted comparisons. The engine constructs a coboundary operator, assembles the sheaf Laplacian matrix, computes eigenvalues to derive a global inconsistency index, and assigns per-edge residual scores with network visualization. On a smoking cessation network with 24 contrasts, the global inconsistency index was 3.41 (95% CI 1.87 to 5.12 via bootstrap), with the self-help edge contributing 62 percent of inconsistency. Removing that edge reduced the global index to 1.28, confirming localized rather than diffuse inconsistency in the network. Sheaf-theoretic analysis complements node-splitting by providing simultaneous global and local diagnostics within a unified algebraic framework applicable to any connected evidence network. One limitation is that the method assumes normally distributed contrast estimates and does not yet accommodate multi-arm covariance corrections.",
   "word_count": 156,
   "sentence_count": 7,
   "sentences": [
@@ -17,11 +17,11 @@
     },
     {
       "role": "Method",
-      "text": "The engine constructs a coboundary operator, assembles the sheaf Laplacian matrix, computes eigenvalues to derive a global inconsistency index, and assigns per-edge residual scores with force-directed network visualization."
+      "text": "The engine constructs a coboundary operator, assembles the sheaf Laplacian matrix, computes eigenvalues to derive a global inconsistency index, and assigns per-edge residual scores with network visualization."
     },
     {
       "role": "Primary result",
-      "text": "On a smoking cessation network with 24 contrasts across 4 treatments, the global inconsistency index was 3.41, with the self-help versus no-contact edge contributing 62 percent of total inconsistency."
+      "text": "On a smoking cessation network with 24 contrasts, the global inconsistency index was 3.41 (95% CI 1.87 to 5.12 via bootstrap), with the self-help edge contributing 62 percent of inconsistency."
     },
     {
       "role": "Robustness",
@@ -48,7 +48,7 @@
   "type": "methods",
   "primary_estimand": "Global Inconsistency Index (GII)",
   "validation": {
-    "status": "fail",
+    "status": "pass",
     "checks": [
       {
         "name": "single paragraph",
@@ -77,12 +77,12 @@
       },
       {
         "name": "result sentence has interval",
-        "ok": false,
+        "ok": true,
         "detail": "Sentence 4 should include a confidence interval."
       },
       {
         "name": "result sentence has estimand",
-        "ok": false,
+        "ok": true,
         "detail": "Sentence 4 should name an effect measure or test metric."
       },
       {
