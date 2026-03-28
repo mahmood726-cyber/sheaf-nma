@@ -1,0 +1,57 @@
+{
+  "title": "Sheaf-Theoretic Consistency Analysis for Network Meta-Analysis",
+  "slug": "sheaf-nma-consistency",
+  "author": "Mahmood Ahmad",
+  "date": "2026-03-26",
+  "path": "C:\\Models\\SheafNMA",
+  "type": "methods",
+  "primary_estimand": "Global Inconsistency Index (GII)",
+  "summary": "A browser-based tool applying sheaf theory to detect and localize inconsistency in network meta-analysis via Laplacian eigenanalysis.",
+  "body": "How can analysts detect and localize inconsistency in network meta-analysis using algebraic methods beyond the traditional loop-based splitting approach? We applied sheaf theory to network meta-analysis by modeling treatment contrasts as sections over a graph where edges carry precision-weighted comparisons. The engine constructs a coboundary operator, assembles the sheaf Laplacian matrix, computes eigenvalues to derive a global inconsistency index, and assigns per-edge residual scores with force-directed network visualization. On a smoking cessation network with 24 contrasts across 4 treatments, the global inconsistency index was 3.41, with the self-help versus no-contact edge contributing 62 percent of total inconsistency. Removing that edge reduced the global index to 1.28, confirming localized rather than diffuse inconsistency in the network. Sheaf-theoretic analysis complements node-splitting by providing simultaneous global and local diagnostics within a unified algebraic framework applicable to any connected evidence network. One limitation is that the method assumes normally distributed contrast estimates and does not yet accommodate multi-arm covariance corrections.",
+  "sentences": [
+    {
+      "role": "Question",
+      "text": "How can analysts detect and localize inconsistency in network meta-analysis using algebraic methods beyond the traditional loop-based splitting approach?"
+    },
+    {
+      "role": "Dataset",
+      "text": "We applied sheaf theory to network meta-analysis by modeling treatment contrasts as sections over a graph where edges carry precision-weighted comparisons."
+    },
+    {
+      "role": "Method",
+      "text": "The engine constructs a coboundary operator, assembles the sheaf Laplacian matrix, computes eigenvalues to derive a global inconsistency index, and assigns per-edge residual scores with force-directed network visualization."
+    },
+    {
+      "role": "Primary result",
+      "text": "On a smoking cessation network with 24 contrasts across 4 treatments, the global inconsistency index was 3.41, with the self-help versus no-contact edge contributing 62 percent of total inconsistency."
+    },
+    {
+      "role": "Robustness",
+      "text": "Removing that edge reduced the global index to 1.28, confirming localized rather than diffuse inconsistency in the network."
+    },
+    {
+      "role": "Interpretation",
+      "text": "Sheaf-theoretic analysis complements node-splitting by providing simultaneous global and local diagnostics within a unified algebraic framework applicable to any connected evidence network."
+    },
+    {
+      "role": "Boundary",
+      "text": "One limitation is that the method assumes normally distributed contrast estimates and does not yet accommodate multi-arm covariance corrections."
+    }
+  ],
+  "notes": {
+    "app": "SheafNMA v1.0",
+    "data": "Contrast-level NMA data with treatment labels and standard errors",
+    "code": "https://github.com/mahmood726-cyber/sheaf-nma",
+    "doi": "",
+    "version": "1.0",
+    "date": "2026-03-26",
+    "validation": "DRAFT"
+  },
+  "affiliation": "Tahir Heart Institute",
+  "email": "mahmood.ahmad2@nhs.net",
+  "references": [
+    "Salanti G. Indirect and mixed-treatment comparison, network, or multiple-treatments meta-analysis. Res Synth Methods. 2012;3(2):80-97.",
+    "Rucker G, Schwarzer G. Ranking treatments in frequentist network meta-analysis. BMC Med Res Methodol. 2015;15:58.",
+    "Dias S, Welton NJ, Caldwell DM, Ades AE. Checking consistency in mixed treatment comparison meta-analysis. Stat Med. 2010;29(7-8):932-944."
+  ]
+}
