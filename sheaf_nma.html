@@ -1959,20 +1959,29 @@ function showToast(msg) {
 
 // ===== EXPORT FUNCTIONS =====
 
+/** Sanitize a CSV cell to prevent formula injection in Excel/Sheets.
+ *  Prepends ' to cells starting with =, +, @, \t, \r (NOT - per data rules). */
+function sanitizeCSVCell(val) {
+  if (val == null) return '';
+  const s = String(val);
+  if (s.length > 0 && '=+@\t\r'.includes(s[0])) return "'" + s;
+  return s;
+}
+
 function exportCSV() {
   if (!currentResult) { alert('Run analysis first.'); return; }
   const res = currentResult;
 
   let csv = 'Edge,Direct Effect,SE,Inconsistency Score (%),Residual,Studies\n';
   res.edges.forEach((e, i) => {
-    csv += `${e.treat1}-${e.treat2},${e.effect.toFixed(6)},${e.se.toFixed(6)},${res.normalizedScores[i].toFixed(1)},${res.edgeResiduals[i].toFixed(6)},${e.k}\n`;
+    csv += `${sanitizeCSVCell(e.treat1)}-${sanitizeCSVCell(e.treat2)},${e.effect.toFixed(6)},${e.se.toFixed(6)},${res.normalizedScores[i].toFixed(1)},${res.edgeResiduals[i].toFixed(6)},${e.k}\n`;
   });
 
   csv += `\nGII,${res.gii.toFixed(6)}\n`;
 
   csv += '\nTreatment,Estimate\n';
   res.nodes.forEach((nd, i) => {
-    csv += `${nd},${res.nodeEstimates[i].toFixed(6)}\n`;
+    csv += `${sanitizeCSVCell(nd)},${res.nodeEstimates[i].toFixed(6)}\n`;
   });
 
   csv += '\nEigenvalue Index,Value\n';
