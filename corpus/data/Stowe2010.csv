@@ -1,0 +1,32 @@
+"study","treat1","treat2","effect","se"
+"DA(pr/B) Int","Dopamine Agonist","Placebo",-1.6,0.613499453094596
+"DA(B) Germany","Dopamine Agonist","Placebo",-3.7,1.02771591405407
+"DA(C)Spain","Dopamine Agonist","Placebo",-0.86,1.46084654192274
+"DA(C) UK","Dopamine Agonist","Placebo",-1.3,0.786137268901275
+"DA(C) USA","Dopamine Agonist","Placebo",-1.31,0.597370275227561
+"DA(pe) N America","Dopamine Agonist","Placebo",-1.6,0.495089202118663
+"DA(Pr) Aus/ger","Dopamine Agonist","Placebo",-2.7,0.805007827800582
+"DA(Pr) CLEOPATRA","Dopamine Agonist","Placebo",-1.9,0.538557796341303
+"DA(Pr) Denmark","Dopamine Agonist","Placebo",-0.3,1.07334475613255
+"DA(Pr) Europe","Dopamine Agonist","Placebo",-1.82,0.303786417964108
+"DA(Pr) US/CANADA","Dopamine Agonist","Placebo",-1.7,0.382138462948981
+"DA(Pr) EASE-PD","Dopamine Agonist","Placebo",-1.8,0.45266289298381
+"DA(Pr) France/Eng","Dopamine Agonist","Placebo",0.48,0.795902550294455
+"DA(Pr) UK/Israel","Dopamine Agonist","Placebo",-0.58,0.700286892353221
+"DA(Pr) USA","Dopamine Agonist","Placebo",-0.31,0.679587863760258
+"COMTI(E) Colemen","COMTI","Placebo",-0.7,0.452400075839203
+"COMTI(E) ComQol","COMTI","Placebo",-0.1,0.249827526712827
+"COMTI(E) INT-OZ","COMTI","Placebo",-0.32,0.490362971844168
+"LARGO","COMTI","MAOBI",-0.02,0.211670921221639
+"LARGO","COMTI","Placebo",-0.8,0.211679609033874
+"COMTI(E) Nomecomt","COMTI","Placebo",-1.2,0.356002370916958
+"COMTI(E) Sth Korea","COMTI","Placebo",-0.5,0.345431249146677
+"COMTI(E) UK/Irish","COMTI","Placebo",-0.8,0.446142889958889
+"COMTI(T) China","COMTI","Placebo",-2.05,1.04355162785557
+"COMTI(T) Europe","COMTI","Placebo",-1.36,0.497834390595678
+"COMTI(T) TFSG1","COMTI","Placebo",-1.57,0.388894801542354
+"COMTI(T) TFSG3","COMTI","Placebo",-1.7,0.424463216002436
+"COMTI(T) TIPS I","COMTI","Placebo",-1.67,0.657778287496104
+"MAOBI(R) PRESTO","MAOBI","Placebo",-0.94,0.2850517230705
+"MAOBI(ZS) USA","MAOBI","Placebo",-1.6,0.444525441021185
+"LARGO","Placebo","MAOBI",0.78,0.211670921221639

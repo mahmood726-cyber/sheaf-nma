@@ -1,0 +1,125 @@
+"study","treat1","treat2","effect","se"
+"1","SNRI","Placebo",0.664976,0.358845
+"1","TCA","Placebo",0.094727,0.339731
+"1","TCA","SNRI",-0.570249,0.362066
+"2","Face-to-face CBT","UC",0.466237,0.411963
+"4","TCA","Placebo",0.916291,0.555278
+"5","Ind drug","Other face-to-face",0.28388,0.41189
+"6","Self-help CBT","UC",0.544933,0.274411
+"7","TCA","Placebo",0.459532,0.510847
+"9","TCA","SSRI",0.003889,0.206279
+"11","SSRI","Placebo",0.442197,0.28601
+"11","TCA","Placebo",0.198851,0.28088
+"11","TCA","SSRI",-0.243346,0.27912
+"12","Face-to-face interpsy","UC",-0.062723,0.393422
+"16","Face-to-face PST","Face-to-face PST + SSRI",-0.237672,0.408287
+"16","SSRI","Face-to-face PST",0.643137,0.418367
+"16","SSRI","Face-to-face PST + SSRI",0.405465,0.491596
+"17","TCA","Placebo",1.080594,0.29227
+"18","TCA","Placebo",0.537101,0.348037
+"20","TCA","SSRI",-0.008584,0.38942
+"22","TCA","SSRI",0.04256,0.350104
+"23","TCA","SSRI",-0.231221,0.219334
+"24","Face-to-face PST","Placebo",1.393842,0.549792
+"24","TCA","Face-to-face PST",-0.482005,0.522214
+"24","TCA","Placebo",0.911836,0.53656
+"26","SSRI","Placebo",0.41225,0.197766
+"29","TCA","SSRI",0.895013,0.41015
+"30","NaSSa","rMAO-A",0.068993,0.397588
+"31","TCA","Placebo",0.679519,0.323663
+"33","TCA","rMAO-A",0.54377,0.224443
+"34","TCA","SSRI",-0.230691,0.341233
+"35","Face-to-face CBT","UC",0.680244,0.637124
+"37","TCA","SSRI",-0.168539,0.446132
+"39","NaSSa","Placebo",0.303186,0.557007
+"41","SSRI","SNRI",0.413662,0.218059
+"43","Face-to-face interpsy","UC",0.430207,0.300845
+"43","TCA","Face-to-face interpsy",0.349274,0.296051
+"43","TCA","UC",0.779481,0.302725
+"46","SSRI","Hypericum",0.169821,0.262263
+"48","SSRI","Placebo",0.488425,0.206934
+"49","Face-to-face PST","Placebo",0.310407,0.253818
+"49","SSRI","Face-to-face PST",0.253643,0.245993
+"49","SSRI","Placebo",0.56405,0.251433
+"50","Hypericum","Placebo",0.605958,0.251032
+"50","SSRI","Hypericum",0.068993,0.250385
+"50","SSRI","Placebo",0.67495,0.253392
+"52","TCA","rMAO-A",0.710097,0.564169
+"53","NaSSa","Placebo",0.288798,0.253774
+"53","SSRI","NaSSa",0.283829,0.259978
+"53","SSRI","Placebo",0.572626,0.255942
+"55","Hypericum","Placebo",0.452612,0.369499
+"55","TCA","Hypericum",-0.36992,0.292877
+"55","TCA","Placebo",0.082692,0.359617
+"56","TCA","SSRI",0.004136,0.232879
+"57","TCA","SSRI",-0.055503,0.129999
+"58","Face-to-face CBT","Other face-to-face",-0.146603,0.541794
+"58","Face-to-face CBT","UC",0.27828,0.528476
+"58","Other face-to-face","UC",0.424883,0.534553
+"58","TCA","Face-to-face CBT",-0.7407,0.523252
+"58","TCA","Other face-to-face",-0.887303,0.529388
+"58","TCA","UC",-0.46242,0.515751
+"59","Face-to-face CBT","UC",0.274437,0.743392
+"61","Hypericum","Placebo",0.074691,0.386552
+"61","SSRI","Hypericum",-0.123481,0.38962
+"61","SSRI","Placebo",-0.04879,0.391375
+"64","SSRI","Hypericum",-0.813106,0.263925
+"65","Hypericum","Placebo",1.94591,0.434248
+"66","Hypericum","Placebo",1.047969,0.663412
+"67","SSRI","Hypericum",0.131028,0.334093
+"68","Hypericum","Placebo",1.386294,0.715891
+"70","SSRI","Hypericum",-0.178692,0.423004
+"71","Hypericum","Placebo",0.846481,0.427208
+"72","TCA","Hypericum",0.120286,0.312006
+"73","Hypericum","Placebo",0.29515,0.380691
+"74","Hypericum","Placebo",0.477786,0.366389
+"76","SSRI","SNRI",-0.089612,0.278425
+"78","Remote CBT","UC",0.92607,0.256073
+"79","Other face-to-face","UC",0.273696,0.357227
+"82","Face-to-face interpsy","Face-to-face interpsy + SSRI",-0.554079,0.187087
+"82","SSRI","Face-to-face interpsy",0.622047,0.190474
+"82","SSRI","Face-to-face interpsy + SSRI",0.067968,0.1835
+"83","Low-dose SARI","NaSSa",0.523444,0.390696
+"83","TCA","Low-dose SARI",0.818399,0.311601
+"83","TCA","NaSSa",1.341843,0.422159
+"84","Other face-to-face","UC",0.70432,0.342762
+"86","No contact CBT","UC",0.452028,0.348132
+"88","Low-dose SARI","NaSSa",0.946778,0.368015
+"90","TCA","SSRI",0.587787,0.446029
+"91","TCA","rMAO-A",0.309413,0.351971
+"94","TCA","SSRI",0.402325,0.322267
+"95","TCA","SSRI",0.359902,0.347304
+"96","TCA","SSRI",-0.615537,0.530694
+"100","TCA","SSRI",-0.382035,0.262057
+"103","Face-to-face CBT","Other face-to-face",-0.039296,0.352975
+"104","Face-to-face CBT","Other face-to-face",-0.065457,0.351214
+"104","Face-to-face CBT","UC",0.553385,0.360336
+"104","Other face-to-face","UC",0.618842,0.354853
+"105","TCA","SSRI",-0.067823,0.223459
+"107","Face-to-face CBT","UC",0.723919,0.618527
+"110","Remote CBT","UC",0.468593,0.204366
+"112","SSRI","SNRI",-0.344242,0.225376
+"113","TCA","Low-dose SARI",-0.07053,0.265603
+"114","Low-dose SARI","NaSSa",0,0.730297
+"115","Remote CBT","UC",1.018312,0.435304
+"116","SSRI","NaSSa",0.806476,0.758758
+"117","SSRI","Face-to-face CBT + SSRI",-2.890372,0.921954
+"118","Face-to-face PST","UC",0.039221,0.339447
+"120","TCA","SSRI",0.022431,0.259621
+"121","Low-dose SARI","NaSSa",1.034074,0.454097
+"123","SSRI","NaSSa",-0.470336,0.287808
+"124","SSRI","Face-to-face psychodyn",0.105361,0.579751
+"125","No contact CBT","UC",0.352221,0.844097
+"126","Face-to-face CBT","UC",0.311939,0.387473
+"127","Other face-to-face","UC",0.211309,0.437904
+"128","TCA","SSRI",0.180051,0.400047
+"131","SSRI","SNRI",-0.24663,0.107726
+"132","TCA","SNRI",0.176624,0.427871
+"134","Face-to-face CBT","Remote CBT",0.184801,0.222675
+"135","SSRI","NRI",0.168963,0.168878
+"200","No contact CBT","UC",0.405632,0.268499
+"201","No contact CBT","UC",0.426743,0.310308
+"202","Self-help CBT","UC",0.099468,0.30829
+"204","Self-help CBT","UC",0.702289,0.286628
+"205","Self-help CBT","UC",0.936093,0.510958
+"206","Other face-to-face","UC",0.349791,0.239712

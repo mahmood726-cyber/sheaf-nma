@@ -1,0 +1,14 @@
+"study","treat1","treat2","effect","se"
+"Findlay 2001","Control/Placebo","Aprotonin",1.22576746415336,1.65239696139277
+"Garcia-Huete 1997","Control/Placebo","Aprotonin",1.09861228866811,1.17727011016194
+"Porte 2000","Control/Placebo","Aprotonin",0.423483613610843,0.696155179993681
+"Boylan 1996","Control/Placebo","Tranexamic acid",2.32238772029023,1.54339652362303
+"Dalmau 2000","Control/Placebo","EACA",0.367724780125317,0.956310574306232
+"Dalmau 2000","Control/Placebo","Tranexamic acid",0.367724780125317,0.956310574306232
+"Dalmau 2000","Tranexamic acid","EACA",0,0.847318545736323
+"Kaspar 1997","Control/Placebo","Tranexamic acid",-1.16113264564944,1.67086470317168
+"Baudo 1992","Control/Placebo","Antithrombin III",1.53797894845196,1.59469106453741
+"Lodge 2005","Control/Placebo","rFVIIa",-0.438801528375756,1.16541895995709
+"Planinsic 2005","Control/Placebo","rFVIIa",-0.422272226424546,1.12805350409363
+"Dalmau 2004","Aprotonin","Tranexamic acid",-1.41908418394288,1.13260571203077
+"Ickx 2006","Aprotonin","Tranexamic acid",-1.5694325778204,1.57481173884535

@@ -1,0 +1,98 @@
+{
+  "datasets": {
+    "Baker2009": {
+      "dataset": "Baker2009",
+      "file": "Baker2009.csv",
+      "n_treatments": 8,
+      "n_edges": 74,
+      "n_studies": 38
+    },
+    "Dogliotti2014": {
+      "dataset": "Dogliotti2014",
+      "file": "Dogliotti2014.csv",
+      "n_treatments": 8,
+      "n_edges": 27,
+      "n_studies": 19
+    },
+    "Dong2013": {
+      "dataset": "Dong2013",
+      "file": "Dong2013.csv",
+      "n_treatments": 6,
+      "n_edges": 70,
+      "n_studies": 38
+    },
+    "Franchini2012": {
+      "dataset": "Franchini2012",
+      "file": "Franchini2012.csv",
+      "n_treatments": 5,
+      "n_edges": 9,
+      "n_studies": 7
+    },
+    "Gurusamy2011": {
+      "dataset": "Gurusamy2011",
+      "file": "Gurusamy2011.csv",
+      "n_treatments": 6,
+      "n_edges": 13,
+      "n_studies": 11
+    },
+    "Linde2015": {
+      "dataset": "Linde2015",
+      "file": "Linde2015.csv",
+      "n_treatments": 9,
+      "n_edges": 73,
+      "n_studies": 59
+    },
+    "Linde2016": {
+      "dataset": "Linde2016",
+      "file": "Linde2016.csv",
+      "n_treatments": 22,
+      "n_edges": 124,
+      "n_studies": 93
+    },
+    "Senn2013": {
+      "dataset": "Senn2013",
+      "file": "Senn2013.csv",
+      "n_treatments": 10,
+      "n_edges": 28,
+      "n_studies": 26
+    },
+    "Stowe2010": {
+      "dataset": "Stowe2010",
+      "file": "Stowe2010.csv",
+      "n_treatments": 4,
+      "n_edges": 31,
+      "n_studies": 29
+    },
+    "Woods2010": {
+      "dataset": "Woods2010",
+      "file": "Woods2010.csv",
+      "n_treatments": 4,
+      "n_edges": 8,
+      "n_studies": 3
+    },
+    "dietaryfat": {
+      "dataset": "dietaryfat",
+      "file": "dietaryfat.csv",
+      "n_treatments": 3,
+      "n_edges": 12,
+      "n_studies": 10
+    },
+    "parkinson": {
+      "dataset": "parkinson",
+      "file": "parkinson.csv",
+      "n_treatments": 5,
+      "n_edges": 9,
+      "n_studies": 7
+    },
+    "smokingcessation": {
+      "dataset": "smokingcessation",
+      "file": "smokingcessation.csv",
+      "n_treatments": 4,
+      "n_edges": 28,
+      "n_studies": 24
+    }
+  },
+  "netmeta_version": "3.2.0",
+  "r_version": "R version 4.5.2 (2025-10-31 ucrt)",
+  "exported_at": "2026-05-12T14:05:21+0100"
+}
