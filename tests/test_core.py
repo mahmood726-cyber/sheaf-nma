@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from sheafnma.core import build_coboundary, sheaf_laplacian, gii, edge_residuals
+from sheafnma.core import build_coboundary, sheaf_laplacian, gii, edge_residuals, _solve_node_estimates
 
 
 def _triangle_network():
@@ -54,7 +54,7 @@ def test_gii_is_positive_on_inconsistent_network():
     net = _triangle_network()
     net["edges"][2]["effect"] = 5.0  # break A-C closure (should be 2)
     g = gii(net)
-    assert g > 0.5
+    np.testing.assert_allclose(g, 3.0, atol=1e-9)
 
 
 def test_edge_residuals_hand_verified_triangle():
@@ -63,3 +63,45 @@ def test_edge_residuals_hand_verified_triangle():
     r = edge_residuals(net)
     assert len(r) == 3
     np.testing.assert_allclose(r, np.zeros(3), atol=1e-9)
+
+
+def test_gii_scale_invariance_under_uniform_se_doubling():
+    """If every (effect, SE) is doubled together, the precision-weighted
+    data d = effect/se is unchanged. F is halved (entries are 1/se), so
+    L is quartered and b is halved, giving x_red doubled and F@x
+    unchanged. GII = sum((d - F@x)²) must therefore equal the GII of the
+    SE=1 case.
+
+    This discriminates effect/se from effect*se: with effect*se the data
+    vector would scale by 4 instead of being invariant, breaking the
+    invariance.
+
+    Reference: the SE=1 inconsistent triangle of
+    test_gii_is_positive_on_inconsistent_network has effects (1,1,5) and
+    GII=3.0. We double everything to (2,2,10) at SE=2 and assert GII==3.0.
+    """
+    net = {
+        "nodes": ["A", "B", "C"],
+        "edges": [
+            {"treat1": "A", "treat2": "B", "effect": 2.0, "se": 2.0},
+            {"treat1": "B", "treat2": "C", "effect": 2.0, "se": 2.0},
+            {"treat1": "A", "treat2": "C", "effect": 10.0, "se": 2.0},
+        ],
+    }
+    g = gii(net)
+    np.testing.assert_allclose(g, 3.0, atol=1e-9)
+
+
+def test_solve_raises_value_error_on_disconnected_network():
+    """Disconnected network (two components: A-B and C-D, no bridge)
+    should produce a ValueError with a clear message, not a raw
+    LinAlgError from numpy."""
+    net = {
+        "nodes": ["A", "B", "C", "D"],
+        "edges": [
+            {"treat1": "A", "treat2": "B", "effect": 1.0, "se": 1.0},
+            {"treat1": "C", "treat2": "D", "effect": 2.0, "se": 1.0},
+        ],
+    }
+    with pytest.raises(ValueError, match="disconnected"):
+        gii(net)

@@ -42,7 +42,14 @@ def _solve_node_estimates(F: np.ndarray, d: np.ndarray) -> np.ndarray:
         return np.array([0.0])
     L_red = L[1:, 1:]
     b_red = Ftd[1:]
-    x_red = np.linalg.solve(L_red, b_red)
+    try:
+        x_red = np.linalg.solve(L_red, b_red)
+    except np.linalg.LinAlgError as exc:
+        raise ValueError(
+            "Network graph is disconnected or degenerate: reduced "
+            "sheaf Laplacian is singular. SheafNMA v0.2 requires a "
+            "connected network with no zero/negative SE values."
+        ) from exc
     x = np.zeros(n)
     x[1:] = x_red
     return x
