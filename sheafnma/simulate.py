@@ -11,14 +11,17 @@ from typing import Callable
 
 
 def splitmix32(seed: int) -> Callable[[], int]:
-    state = [seed & 0xFFFFFFFF]
+    """Splitmix32 matching generate_figures.py exactly (constants 0x21F0AAAD / 0x735A2D97,
+    both shifts are 15) for byte-identical seed expansion."""
+    a = seed & 0xFFFFFFFF
     def next32() -> int:
-        state[0] = (state[0] + 0x9E3779B9) & 0xFFFFFFFF
-        z = state[0]
-        z = ((z ^ (z >> 16)) * 0x85EBCA6B) & 0xFFFFFFFF
-        z = ((z ^ (z >> 13)) * 0xC2B2AE35) & 0xFFFFFFFF
-        z = (z ^ (z >> 16)) & 0xFFFFFFFF
-        return z
+        nonlocal a
+        a = (a + 0x9E3779B9) & 0xFFFFFFFF
+        t = a ^ (a >> 16)
+        t = (t * 0x21F0AAAD) & 0xFFFFFFFF
+        t = t ^ (t >> 15)
+        t = (t * 0x735A2D97) & 0xFFFFFFFF
+        return (t ^ (t >> 15)) & 0xFFFFFFFF
     return next32
 
 
