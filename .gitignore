@@ -6,3 +6,12 @@ sentinel-findings.md
 sentinel-findings.jsonl
 review-findings.md
 review-findings.jsonl
+
+# Python package build artifacts
+__pycache__/
+*.egg-info/
+*.pyc
+.venv/
+
+# Analysis results
+analysis/results/

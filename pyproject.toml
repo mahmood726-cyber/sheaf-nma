@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sheafnma"
+version = "0.2.0"
+description = "Cellular-sheaf inconsistency localization for network meta-analysis"
+authors = [{ name = "Mahmood Ahmad" }]
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26", "scipy>=1.11"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-cov>=4"]
+viz = ["matplotlib>=3.8"]
+
+[tool.setuptools.packages.find]
+include = ["sheafnma*"]
+exclude = ["tests*", "corpus*", "analysis*", "paper*", "e156-submission*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
