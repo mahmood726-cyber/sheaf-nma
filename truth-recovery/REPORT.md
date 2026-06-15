@@ -37,6 +37,47 @@ The fixed-effect loop-closure tests use only the IV-pooled SE (`comparators.py`:
 ## Tests
 `test_truth_recovery.py`: 5/5 pass — no-false-alarm (low noise), monotone power, DBT over-detection BUG, GII uncalibrated-redflag BUG, localization.
 
+## FIX (2026-06-15) — heterogeneity-robust null calibration
+
+New module `sheafnma/calibrate.py::calibrated_inconsistency`. Additive: `core.gii`
+and the FE comparators are untouched (all their exact-value tests still pass).
+
+Mechanism (same family as the meta-entropy null-calibration fix): fit the
+consistent WLS model, take precision-weighted residuals, studentize by hat-matrix
+leverage so they are homoscedastic under the null, then estimate a *multiplicative
+over-dispersion* phi robustly (median seed + iterated outlier-trimmed mean with a
+truncated-normal de-bias). phi absorbs the unmodeled tau^2 (~1 when SEs adequate,
+>1 under heterogeneity). The max standardized residual is judged against a
+standard-normal null with Bonferroni over edges → a calibrated p-value that also
+localizes. The trimming keeps a single genuinely-inconsistent edge from inflating
+phi and masking itself, so power survives.
+
+Measured on the repo's own harness (`harness.py --calibration`, 1000 reps/cell,
+target alpha=0.05):
+
+| noise_sd | BEFORE DBT type-I | BEFORE Bucher | BEFORE GII≥2 RED | AFTER calibrated |
+|---------:|------------------:|--------------:|-----------------:|-----------------:|
+| 0.05 | 0.000 | 0.000 | 0.140 | **0.047** |
+| 0.15 | 0.155 | 0.475 | 0.997 | **0.047** |
+| 0.30 | 0.914 | 0.980 | 1.000 | **0.047** |
+
+Type-I is now nominal AND heterogeneity-invariant. Power preserved (not destroyed):
+
+| noise_sd | delta | BEFORE DBT | AFTER calibrated |
+|---------:|------:|-----------:|-----------------:|
+| 0.05 | 0.2 | 0.065 | 0.844 |
+| 0.05 | 0.5 | 0.878 | 0.996 |
+| 0.05 | 1.0 | 1.000 | 1.000 |
+| 0.15 | 0.2 | 0.418 | 0.128 |
+| 0.15 | 0.5 | 0.946 | 0.721 |
+| 0.15 | 1.0 | 1.000 | 0.988 |
+
+Power is monotone in delta and correctly attenuates under heavier heterogeneity
+(honest: a small effect is genuinely harder to detect when the network is noisier;
+the BEFORE numbers at noise 0.15 are not "power", they are the same false-alarm
+inflation as the delta=0 row). Tests: `tests/test_calibrate.py` (6) +
+`test_truth_recovery.py` FIX assertions (3) all pass.
+
 ## Recommendation
 1. Make GII calibrated, not absolute: scale to χ² on n_loops df or bootstrap/permute the null → p-value/z. Never color by raw Σr².
 2. Add random-effects (τ²) to loop-closure SE in `comparators.py` and to precision weights in `core.build_coboundary` (DL/REML within-contrast). Without it DBT/Bucher are anti-conservative under heterogeneity.

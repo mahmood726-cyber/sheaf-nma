@@ -1,0 +1,82 @@
+{
+  "reps": 1000,
+  "n_treat": 6,
+  "n_studies": 5,
+  "alpha": 0.05,
+  "null_type_I": [
+    {
+      "noise_sd": 0.05,
+      "delta": 0.0,
+      "before_dbt": 0.0,
+      "before_bucher": 0.0,
+      "before_gii_red": 0.14,
+      "after_calibrated": 0.047
+    },
+    {
+      "noise_sd": 0.15,
+      "delta": 0.0,
+      "before_dbt": 0.155,
+      "before_bucher": 0.475,
+      "before_gii_red": 0.997,
+      "after_calibrated": 0.047
+    },
+    {
+      "noise_sd": 0.3,
+      "delta": 0.0,
+      "before_dbt": 0.914,
+      "before_bucher": 0.98,
+      "before_gii_red": 1.0,
+      "after_calibrated": 0.047
+    }
+  ],
+  "power": [
+    {
+      "noise_sd": 0.05,
+      "delta": 0.2,
+      "before_dbt": 0.065,
+      "before_bucher": 0.485,
+      "before_gii_red": 1.0,
+      "after_calibrated": 0.844
+    },
+    {
+      "noise_sd": 0.05,
+      "delta": 0.5,
+      "before_dbt": 0.878,
+      "before_bucher": 1.0,
+      "before_gii_red": 1.0,
+      "after_calibrated": 0.996
+    },
+    {
+      "noise_sd": 0.05,
+      "delta": 1.0,
+      "before_dbt": 1.0,
+      "before_bucher": 1.0,
+      "before_gii_red": 1.0,
+      "after_calibrated": 1.0
+    },
+    {
+      "noise_sd": 0.15,
+      "delta": 0.2,
+      "before_dbt": 0.418,
+      "before_bucher": 0.757,
+      "before_gii_red": 1.0,
+      "after_calibrated": 0.128
+    },
+    {
+      "noise_sd": 0.15,
+      "delta": 0.5,
+      "before_dbt": 0.946,
+      "before_bucher": 1.0,
+      "before_gii_red": 1.0,
+      "after_calibrated": 0.721
+    },
+    {
+      "noise_sd": 0.15,
+      "delta": 1.0,
+      "before_dbt": 1.0,
+      "before_bucher": 1.0,
+      "before_gii_red": 1.0,
+      "after_calibrated": 0.988
+    }
+  ]
+}

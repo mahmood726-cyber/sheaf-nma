@@ -23,8 +23,9 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from sheafnma.core import edge_residuals  # noqa: E402
+from sheafnma.core import edge_residuals, gii  # noqa: E402
 from sheafnma.comparators import design_by_treatment_chi2, bucher_loop_closure  # noqa: E402
+from sheafnma.calibrate import calibrated_inconsistency  # noqa: E402
 from dgp_known_truth import make_network  # noqa: E402
 
 
@@ -34,6 +35,11 @@ def dbt_flag(net) -> bool:
 
 def bucher_flag(net) -> bool:
     return any(b["p_value"] < 0.05 for b in bucher_loop_closure(net))
+
+
+def calibrated_flag(net) -> bool:
+    """Heterogeneity-robust calibrated inconsistency decision (the FIX)."""
+    return calibrated_inconsistency(net, alpha=0.05)["inconsistent"]
 
 
 def abs_residuals(net) -> np.ndarray:
@@ -154,9 +160,73 @@ def measure(reps=600, n_treat=6, n_studies=5, seed=20260615):
     return out
 
 
+def measure_calibration_before_after(
+    reps=1000, n_treat=6, n_studies=5, seed=20260615,
+    null_noise=(0.05, 0.15, 0.30), power_noise=(0.05, 0.15),
+    power_deltas=(0.2, 0.5, 1.0),
+):
+    """BEFORE vs AFTER false-positive rate AND power, under heterogeneity.
+
+    BEFORE = the repo's shipped detectors: fixed-effect DBT-chi2, Bucher any-loop,
+             and the absolute GII>=2 "RED" rule (all ignore tau^2 / lack a null).
+    AFTER  = the calibrated, heterogeneity-robust test (sheafnma.calibrate).
+
+    Networks are CONSISTENT BY CONSTRUCTION at delta=0 (true type-I) and carry a
+    single KNOWN planted inconsistency at delta>0 (power). Reported rates are
+    vs that known truth. Target nominal alpha = 0.05.
+    """
+    def _rates(noise, delta):
+        rng = np.random.default_rng(seed)
+        dbt = buc = gii_red = calib = 0
+        for _ in range(reps):
+            net = make_network(n_treat, n_studies, rng,
+                               inject_delta=delta, noise_sd=noise)
+            if dbt_flag(net):
+                dbt += 1
+            if bucher_flag(net):
+                buc += 1
+            if gii(net) >= 2.0:          # HTML absolute RED cutoff
+                gii_red += 1
+            if calibrated_flag(net):     # the FIX
+                calib += 1
+        return {
+            "before_dbt": dbt / reps,
+            "before_bucher": buc / reps,
+            "before_gii_red": gii_red / reps,
+            "after_calibrated": calib / reps,
+        }
+
+    out = {"reps": reps, "n_treat": n_treat, "n_studies": n_studies,
+           "alpha": 0.05, "null_type_I": [], "power": []}
+    for noise in null_noise:
+        cell = {"noise_sd": noise, "delta": 0.0}
+        cell.update(_rates(noise, 0.0))
+        out["null_type_I"].append(cell)
+    for noise in power_noise:
+        for delta in power_deltas:
+            cell = {"noise_sd": noise, "delta": delta}
+            cell.update(_rates(noise, delta))
+            out["power"].append(cell)
+    return out
+
+
 if __name__ == "__main__":
-    res = measure()
-    print(json.dumps(res, indent=2))
-    outp = Path(__file__).resolve().parent / "results.json"
-    outp.write_text(json.dumps(res, indent=2), encoding="utf-8")
-    print(f"\nWrote {outp}")
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--calibration", action="store_true",
+                    help="run the BEFORE/AFTER heterogeneity calibration sweep")
+    ap.add_argument("--reps", type=int, default=1000)
+    args = ap.parse_args()
+
+    if args.calibration:
+        res = measure_calibration_before_after(reps=args.reps)
+        print(json.dumps(res, indent=2))
+        outp = Path(__file__).resolve().parent / "calibration_before_after.json"
+        outp.write_text(json.dumps(res, indent=2), encoding="utf-8")
+        print(f"\nWrote {outp}")
+    else:
+        res = measure()
+        print(json.dumps(res, indent=2))
+        outp = Path(__file__).resolve().parent / "results.json"
+        outp.write_text(json.dumps(res, indent=2), encoding="utf-8")
+        print(f"\nWrote {outp}")
