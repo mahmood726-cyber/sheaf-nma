@@ -1,0 +1,38 @@
+{
+  "threshold": 2.6294160092770698,
+  "n_treat": 6,
+  "n_studies": 5,
+  "reps": 600,
+  "cells": [
+    {
+      "delta": 0.0,
+      "dbt_reject_rate": 0.0,
+      "bucher_reject_rate": 0.0,
+      "sheaf_planted_sensitivity": null,
+      "sheaf_clean_edge_fp_rate": 0.0,
+      "html_relnorm_overdetect_ge50pct": 0.8216666666666667,
+      "html_relnorm_overdetect_ge90pct": 0.17166666666666666
+    },
+    {
+      "delta": 0.2,
+      "dbt_reject_rate": 0.05333333333333334,
+      "bucher_reject_rate": 0.4633333333333333,
+      "sheaf_planted_sensitivity": 0.03833333333333333,
+      "sheaf_clean_edge_fp_rate": 0.0
+    },
+    {
+      "delta": 0.5,
+      "dbt_reject_rate": 0.865,
+      "bucher_reject_rate": 1.0,
+      "sheaf_planted_sensitivity": 1.0,
+      "sheaf_clean_edge_fp_rate": 0.0
+    },
+    {
+      "delta": 1.0,
+      "dbt_reject_rate": 1.0,
+      "bucher_reject_rate": 1.0,
+      "sheaf_planted_sensitivity": 1.0,
+      "sheaf_clean_edge_fp_rate": 0.2851190476190476
+    }
+  ]
+}
